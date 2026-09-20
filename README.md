@@ -1,4 +1,8 @@
-# Verity
+<p align="center">
+  <img src="assets/logo-512.png" alt="Verity" width="128">
+</p>
+
+<h1 align="center">Verity</h1>
 
 **Cited, current, versioned ground truth for AI agents** — in the one domain where
 hallucination is most expensive: cross-border product compliance.
