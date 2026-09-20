@@ -273,6 +273,16 @@ class Store:
             self._conn.execute("SELECT * FROM recalls ORDER BY recall_date DESC").fetchall()
         )
 
+    def corpus_version(self) -> tuple[int, int]:
+        """Cheap fingerprint of the recall corpus, used to invalidate caches.
+
+        One indexed aggregate, so it is safe to call on every request.
+        """
+        row = self._conn.execute(
+            "SELECT COUNT(*) AS n, COALESCE(MAX(id), 0) AS m FROM recalls"
+        ).fetchone()
+        return (int(row["n"]), int(row["m"]))
+
     # ---- events ------------------------------------------------------------
 
     def add_event(

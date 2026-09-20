@@ -14,12 +14,24 @@ from typing import Any
 from . import textutil
 from .store import Store
 
+# Bound query size. Unbounded input goes straight into tokenization, so a huge
+# string is a cheap way to burn CPU on a public endpoint.
+MAX_QUERY_CHARS = 256
 
-def _build_idf(recalls) -> dict[str, float]:
-    n = max(len(recalls), 1)
+# Per-process corpus cache, keyed by database path.
+#
+# WHY THIS EXISTS: the naive implementation re-read every recall and re-tokenized
+# the whole corpus on every request. On a public, unauthenticated endpoint that is
+# an availability and cost problem (and a trivial remote CPU-burn). The corpus is
+# built once per process and invalidated when the underlying data changes.
+_CORPUS_CACHE: dict[str, tuple[tuple[int, int], list, dict[str, float], float]] = {}
+
+
+def _build_idf(token_sets) -> dict[str, float]:
+    n = max(len(token_sets), 1)
     df: Counter[str] = Counter()
-    for recall in recalls:
-        for token in textutil.token_set(recall["entry_text"]):
+    for tokens in token_sets:
+        for token in tokens:
             df[token] += 1
     return {tok: math.log((n + 1) / (count + 0.5)) for tok, count in df.items()}
 
@@ -27,29 +39,56 @@ def _build_idf(recalls) -> dict[str, float]:
 class Engine:
     def __init__(self, store: Store):
         self.store = store
+        self.db_key = str(store.path)
+
+    # -- cached corpus -------------------------------------------------------
+
+    def _corpus(self):
+        """Return (entries, idf, max_idf), rebuilding only when data changes.
+
+        `entries` is a list of (recall_row, token_set) so tokenization happens
+        once per process rather than once per request.
+        """
+        version = self.store.corpus_version()
+        cached = _CORPUS_CACHE.get(self.db_key)
+        if cached is not None and cached[0] == version:
+            return cached[1], cached[2], cached[3]
+
+        recalls = self.store.all_recalls()
+        entries = [(r, textutil.token_set(r["entry_text"])) for r in recalls]
+        idf = _build_idf([tokens for _, tokens in entries])
+        max_idf = max(idf.values()) if idf else 1.0
+
+        _CORPUS_CACHE[self.db_key] = (version, entries, idf, max_idf)
+        return entries, idf, max_idf
+
+    def invalidate_cache(self) -> None:
+        _CORPUS_CACHE.pop(self.db_key, None)
+
 
     # ---- recall search -----------------------------------------------------
 
     def search_recalls(
         self, query: str, market: str | None = None, limit: int = 10, threshold: float = 0.45
     ) -> list[dict[str, Any]]:
+        query = (query or "").strip()
+        if not query or len(query) > MAX_QUERY_CHARS:
+            return []
+
         q_tokens = textutil.token_set(query)
         if not q_tokens:
             return []
 
-        recalls = self.store.all_recalls()
+        entries, idf, max_idf = self._corpus()
         if market:
-            recalls = [r for r in recalls if r["market"] == market]
-        idf = _build_idf(recalls)
-        max_idf = max(idf.values()) if idf else 1.0
+            entries = [(r, tokens) for r, tokens in entries if r["market"] == market]
 
         q_weight = sum(idf.get(t, max_idf) for t in q_tokens)
         if q_weight <= 0:
             return []
 
         scored: list[dict[str, Any]] = []
-        for recall in recalls:
-            r_tokens = textutil.token_set(recall["entry_text"])
+        for recall, r_tokens in entries:
             shared = q_tokens & r_tokens
             if not shared:
                 continue
@@ -88,6 +127,9 @@ class Engine:
     # ---- requirements ------------------------------------------------------
 
     def get_requirements(self, subject: str, market: str | None = None) -> list[dict[str, Any]]:
+        subject = (subject or "").strip()
+        if not subject or len(subject) > 64:
+            return []
         rows = self.store.find_facts(subject=subject, market=market)
         return [self._fact_to_dict(r) for r in rows]
 
@@ -137,6 +179,8 @@ class Engine:
         query = (query or "").strip()
         if not query:
             return {"found": False, "reason": "empty query", "results": []}
+        if len(query) > MAX_QUERY_CHARS:
+            return {"found": False, "reason": "query too long", "results": []}
 
         recalls = self.search_recalls(query, limit=5, threshold=0.45)
         facts = []

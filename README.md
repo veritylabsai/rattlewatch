@@ -138,6 +138,28 @@ week. Verity is the opposite of a generative model: a small, boring, cited layer
 truth that agents and the software they power can depend on when being wrong is
 expensive.
 
+## Security
+
+See **[SECURITY.md](SECURITY.md)** for the full threat model, the implemented
+controls, and — listed explicitly — what is **not** protected. Every claim there
+is backed by a test in `tests/test_api.py`.
+
+Highlights: query input bounded at two independent layers; per-client rate
+limiting; API keys compared in constant time that **fail closed**; CORS denied by
+default; hardened response headers; no stack-trace leakage; container runs as an
+unprivileged user (UID 10001).
+
+## Testing
+
+```bash
+export PYTHONPATH=.
+python tests/test_engine.py   # 11 checks — correctness + non-hallucination
+python tests/test_api.py      # 18 checks — security + abuse
+```
+
+See **[TESTING.md](TESTING.md)** for the coverage map and an explicit list of
+what is *not* tested. A green run is not the same as "verified secure."
+
 ## License
 
 Proprietary. See `DEPLOY.md` for operational notes.

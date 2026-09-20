@@ -1,19 +1,33 @@
 # syntax=docker/dockerfile:1
 FROM python:3.13-slim
 
+# Run as an unprivileged user. A compromised process should not be root, and the
+# container never needs to write outside its own data directory.
+RUN groupadd --gid 10001 verity \
+ && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin verity
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /app
 
-# Only copy deps first for better layer caching.
+# Dependencies first for layer caching.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Build the store at image build time so the container is ready to serve.
-# Override with your own build step if you want a fresh feed at deploy time.
+# Build the ground-truth store into the image (re-ingests the live CPSC feed).
+# `|| true` keeps the image buildable if the upstream feed is briefly unavailable;
+# the service still starts and serves whatever was baked in.
 RUN python -m verity build --max-recalls 5000 || true
+
+# Hand ownership to the unprivileged user, then drop privileges.
+RUN chown -R verity:verity /app
+USER verity
 
 EXPOSE 8000
 
-# Serve the REST API and MCP-over-HTTP on the same process.
+# No shell, exec form so the process is PID 1 and receives signals directly.
 CMD ["python", "-m", "verity", "serve", "--host", "0.0.0.0", "--port", "8000"]
