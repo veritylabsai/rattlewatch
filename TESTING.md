@@ -86,9 +86,11 @@ Listed because an unstated gap is worse than a stated one.
    (`list_tools` + `call_tool` against the built server); there is no automated
    MCP test suite, and the deployed HTTP MCP endpoint is verified by a single
    manual `initialize` probe.
-5. **The scheduled refresh job has never passed successfully.** It currently fails
-   on a Cloud Build bucket permission. It is therefore untested by definition and
-   is **unscheduled** so it cannot fail in the background.
+5. **The refresh job has no automated test.** It was verified manually end to end
+   (execution `verity-refresh-mtnbb`, status `True`, producing new revisions on
+   both services), but nothing asserts it keeps working. A silent failure would
+   leave the corpus stale with no alert. Recommended next step: a freshness check
+   that fails if the corpus is older than N hours.
 6. **No CI.** Tests are run manually; nothing prevents a regression from being
    committed.
 7. **No coverage measurement.** Line/branch coverage has not been instrumented,

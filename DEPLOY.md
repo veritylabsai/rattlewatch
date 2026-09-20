@@ -77,19 +77,46 @@ That is the whole promotion strategy. No ads, no social, no outreach — the
 product's job is to be *discoverable, understandable, and trusted*, and every
 answer carries a citation to make the "trusted" part automatic.
 
-## Ongoing operations (minimal)
+## Ongoing operations (now automated)
 
-- **Refresh the feed**: run `python -m verity build` on a schedule (Cloud Run
-  Job / cron, or a GitHub Action). New recalls appear in `list_changes`.
-- **Monitor**: `/health` and `/stats`; alert if `/health` is non-200.
-- **Scale**: it's stateless SQLite + read-mostly; one Cloud Run instance serves
-  far more than the expected early traffic. Add memory only if the recall set
-  grows beyond ~50k records.
+**Data refresh is scheduled and working.** A Cloud Run Job (`verity-refresh`)
+rebuilds the image — which re-ingests the live CPSC feed at build time — and
+redeploys both services. Cloud Scheduler triggers it **daily at 06:00 UTC**.
+
+```bash
+# check history
+gcloud run jobs executions list --job=verity-refresh --region=us-central1 --project=verity-labs
+
+# run it by hand if you want fresh data immediately
+gcloud run jobs execute verity-refresh --region=us-central1 --project=verity-labs --wait
+```
+
+Each run takes roughly 3–4 minutes (build ≈ 55s, two deploys).
+
+> **Two gotchas, learned the hard way:**
+> 1. `gcloud builds submit` exits **non-zero** for a service account that is not a
+>    project Viewer/Owner, because it cannot stream build logs — even when the
+>    build itself succeeds. `scripts/refresh.sh` tolerates that exit code and
+>    verifies the build independently.
+> 2. `gcloud run deploy` needs `--flag=value` syntax when the value begins with
+>    `-` (as `--args` does), or it parses the value as a flag and prints help.
+
+- **Monitor**: `/health` and `/stats`; alert if `/health` is non-200. There is
+  currently no alert if a refresh run fails — see `SECURITY.md` §5.6.
+- **Scale**: stateless, read-mostly. One instance serves far more than the
+  expected traffic.
 
 ## Minimum human checklist
 
-- [ ] Create GitHub account, push repo (I prepare everything; you run `git push`)
-- [ ] Create Google Cloud (or Render) account, run the deploy command above
+- [x] GitHub account, repo pushed
+- [x] Google Cloud project `verity-labs`, billing linked
+- [x] Both services deployed and verified live
+- [x] Daily refresh scheduled and verified
+- [x] Published to the official MCP Registry
+- [ ] Upload the profile avatar — GitHub has **no API for this**; use
+      Settings → Profile → Upload (`assets/logo.png`)
 - [ ] (Later) Wire payment: Stripe metered billing or x402/USDC wallet
+- [ ] (Later) List in Smithery / mcp.so / Glama / PulseMCP
+
 
 Everything else is already built.

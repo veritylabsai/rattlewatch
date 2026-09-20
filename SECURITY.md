@@ -108,10 +108,12 @@ Stated plainly so nobody assumes a guarantee that does not exist.
 5. **Dependencies are pinned by minimum version, not by hash.** No lockfile and no
    SBOM is produced in CI. `pip install -r requirements.txt` will pick up newer
    releases on rebuild.
-6. **The scheduled refresh job does not currently work** (Cloud Build staging
-   bucket permission denied for the job's service account). It is unscheduled, so
-   it fails only when run manually. Consequence: **the corpus is a snapshot from
-   the image build**, not continuously current. See `DEPLOY.md`.
+6. **Data freshness is daily, not continuous.** A Cloud Run Job rebuilds the
+   image (re-ingesting the live CPSC feed) and redeploys both services, triggered
+   by Cloud Scheduler at **06:00 UTC daily**. The corpus can therefore be up to
+   ~24 hours stale. Success is observable via
+   `gcloud run jobs executions list --job=verity-refresh`. There is no alert if a
+   scheduled run fails, so a silent failure would leave the corpus stale.
 7. **`/docs` (OpenAPI) is public.** Intentional for an agent-facing API.
 8. **No security review has been performed by a third party.** These are the
    author's own controls and tests.
