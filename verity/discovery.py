@@ -66,9 +66,19 @@ version and a change event rather than an in-place edit.
   deliberately public)
 - `GET /docs` — OpenAPI
 
+## Coverage
+
+- **CPSC** (consumer products) — the full structured U.S. recall feed
+- **openFDA** (food, drug, device) — enforcement reports
+- **Cited requirements** — CPSIA/CPC, CPSC eFiling, EU GPSR, CE marking, REACH
+  SVHCs, RoHS, California Prop 65
+
+Every record carries a resolvable `source_url`: either the official CPSC page or
+a per-record openFDA query.
+
 ## Freshness
 
-The corpus is rebuilt daily from the live CPSC feed. Check `data_age_hours` at
+The corpus is rebuilt daily from the upstream feeds. Check `data_age_hours` at
 `/stats` before relying on an answer for anything time-critical.
 
 ## Source
@@ -77,9 +87,11 @@ The corpus is rebuilt daily from the live CPSC feed. Check `data_age_hours` at
 
 ## Limits
 
-- Coverage is U.S. CPSC recalls plus a curated set of cited market requirements.
-  It is not a complete global regulatory database.
-- An empty result means "not in the store", not "not recalled".
+- Coverage is U.S. federal recall data plus a curated set of cited market
+  requirements. It is **not** a complete global regulatory database, and it is
+  not legal advice.
+- An empty result means "not in the store", **not** "not recalled". Always
+  confirm against the cited source before acting.
 """
 
 

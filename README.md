@@ -63,11 +63,17 @@ says *"no verified record"*. Absence is an honest negative, not a guess.
 
 ## Data coverage
 
-- **Recalls**: the full structured U.S. CPSC recall feed (title, hazard, remedy,
-  models, retailers, source URL), flattened for search.
-- **Requirements**: a seed of cited cross-border product-compliance facts —
+- **Recalls** — the full structured U.S. CPSC feed (consumer products) plus
+  openFDA enforcement reports for **food, drug and device**. Every record carries
+  a resolvable source URL: the official CPSC page, or a per-record openFDA query.
+- **Requirements** — a curated set of cited cross-border product-compliance facts:
   CPSIA/Children's Product Certificate, CPSC eFiling, EU GPSR, CE marking,
   REACH SVHCs, RoHS, and California Prop 65 — each with a verbatim citation.
+
+```bash
+python -m verity build --max-recalls 5000 --fda-limit 3000   # default in the image
+python -m verity build --fda-limit 0                          # CPSC only (used by CI)
+```
 
 The engine is domain-agnostic: new markets (UK, CA, AU, JP, and beyond) and new
 rule sets are added as more cited facts and feeds are compiled, without code change.

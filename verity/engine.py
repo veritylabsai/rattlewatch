@@ -24,16 +24,17 @@ MAX_QUERY_CHARS = 256
 # the whole corpus on every request. On a public, unauthenticated endpoint that is
 # an availability and cost problem (and a trivial remote CPU-burn). The corpus is
 # built once per process and invalidated when the underlying data changes.
-_CORPUS_CACHE: dict[str, tuple[tuple[int, int], list, dict[str, float], float]] = {}
+_CORPUS_CACHE: dict[str, dict[str, Any]] = {}
 
 
-def _build_idf(token_sets) -> dict[str, float]:
+def _build_idf(token_sets) -> tuple[dict[str, float], Counter]:
     n = max(len(token_sets), 1)
     df: Counter[str] = Counter()
     for tokens in token_sets:
         for token in tokens:
             df[token] += 1
-    return {tok: math.log((n + 1) / (count + 0.5)) for tok, count in df.items()}
+    idf = {tok: math.log((n + 1) / (count + 0.5)) for tok, count in df.items()}
+    return idf, df
 
 
 class Engine:
@@ -43,24 +44,56 @@ class Engine:
 
     # -- cached corpus -------------------------------------------------------
 
-    def _corpus(self):
-        """Return (entries, idf, max_idf), rebuilding only when data changes.
+    def _corpus(self) -> dict[str, Any]:
+        """Return the cached corpus, rebuilt only when the data changes.
 
-        `entries` is a list of (recall_row, token_set) so tokenization happens
+        Keys: ``entries`` (list of (recall dict, token set)), ``idf``,
+        ``max_idf``, ``df``, ``df_threshold``, ``version``. Tokenization happens
         once per process rather than once per request.
         """
         version = self.store.corpus_version()
         cached = _CORPUS_CACHE.get(self.db_key)
-        if cached is not None and cached[0] == version:
-            return cached[1], cached[2], cached[3]
+        if cached is not None and cached["version"] == version:
+            return cached
 
-        recalls = self.store.all_recalls()
-        entries = [(r, textutil.token_set(r["entry_text"])) for r in recalls]
-        idf = _build_idf([tokens for _, tokens in entries])
+        # Materialise plain dicts rather than keeping sqlite3.Row objects alive in
+        # a process-level cache: a Row holds a reference to its cursor, which on
+        # Windows can keep the database file from being released.
+        entries: list[tuple[dict[str, Any], set[str]]] = []
+        for row in self.store.all_recalls():
+            entries.append(
+                (
+                    {
+                        "recall_id": row["recall_id"],
+                        "market": row["market"],
+                        "title": row["title"],
+                        "recall_date": row["recall_date"],
+                        "hazard": row["hazard"],
+                        "source_url": row["source_url"],
+                    },
+                    textutil.token_set(row["entry_text"]),
+                )
+            )
+
+        idf, df = _build_idf([tokens for _, tokens in entries])
         max_idf = max(idf.values()) if idf else 1.0
 
-        _CORPUS_CACHE[self.db_key] = (version, entries, idf, max_idf)
-        return entries, idf, max_idf
+        # Relative distinctiveness: a token is distinctive if it appears in a
+        # minority of documents. An absolute IDF cut-off (formerly idf > 0.7)
+        # breaks on small corpora, where every IDF is small and therefore nothing
+        # qualifies -- which meant a one-record store could never match anything.
+        df_threshold = max(1, int(len(entries) * 0.5))
+
+        corpus = {
+            "version": version,
+            "entries": entries,
+            "idf": idf,
+            "max_idf": max_idf,
+            "df": df,
+            "df_threshold": df_threshold,
+        }
+        _CORPUS_CACHE[self.db_key] = corpus
+        return corpus
 
     def invalidate_cache(self) -> None:
         _CORPUS_CACHE.pop(self.db_key, None)
@@ -79,7 +112,12 @@ class Engine:
         if not q_tokens:
             return []
 
-        entries, idf, max_idf = self._corpus()
+        corpus = self._corpus()
+        entries = corpus["entries"]
+        idf = corpus["idf"]
+        max_idf = corpus["max_idf"]
+        df = corpus["df"]
+        df_threshold = corpus["df_threshold"]
         if market:
             entries = [(r, tokens) for r, tokens in entries if r["market"] == market]
 
@@ -93,7 +131,9 @@ class Engine:
             if not shared:
                 continue
             distinctive = [
-                t for t in shared if textutil.is_identifier(t) or idf.get(t, max_idf) > 0.7
+                t
+                for t in shared
+                if textutil.is_identifier(t) or df.get(t, 0) <= df_threshold
             ]
             if not distinctive:
                 continue

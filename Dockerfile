@@ -18,15 +18,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Build the ground-truth store into the image (re-ingests the live CPSC feed).
+# Build the ground-truth store into the image: CPSC recalls plus openFDA food,
+# drug and device enforcement records.
 #
 # Overridable so CI can build hermetically from the test fixture instead of
-# hitting the live feed:
-#   docker build --build-arg VERITY_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50" .
+# hitting the live feeds:
+#   docker build --build-arg VERITY_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0" .
 #
-# `|| true` keeps the image buildable if the upstream feed is briefly
+# `|| true` keeps the image buildable if an upstream feed is briefly
 # unavailable; the service still starts and serves whatever was baked in.
-ARG VERITY_BUILD_ARGS="--max-recalls 5000"
+ARG VERITY_BUILD_ARGS="--max-recalls 5000 --fda-limit 3000"
 RUN python -m verity build ${VERITY_BUILD_ARGS} || true
 
 # Hand ownership to the unprivileged user, then drop privileges.

@@ -287,7 +287,7 @@ def test_corpus_cache_avoids_rebuilding_per_request():
     e = Engine(Store(DB))
     e.search_recalls("grill")  # builds
     assert _CORPUS_CACHE, "corpus was not cached"
-    version_before = next(iter(_CORPUS_CACHE.values()))[0]
+    version_before = next(iter(_CORPUS_CACHE.values()))["version"]
 
     t0 = time.perf_counter()
     for _ in range(20):
@@ -296,7 +296,7 @@ def test_corpus_cache_avoids_rebuilding_per_request():
 
     # 20 cached searches should be fast; a per-request rebuild of 5k docs would not be.
     assert cached_elapsed < 5.0, f"20 searches took {cached_elapsed:.2f}s (cache not working?)"
-    assert next(iter(_CORPUS_CACHE.values()))[0] == version_before
+    assert next(iter(_CORPUS_CACHE.values()))["version"] == version_before
 
 
 if __name__ == "__main__":

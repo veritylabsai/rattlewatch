@@ -13,6 +13,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 import yaml
@@ -115,6 +116,134 @@ def fetch_cpsc(max_records: int | None = None, cache_path: str | Path | None = N
         Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
         Path(cache_path).write_text(json.dumps(data), "utf-8")
     return data
+
+
+# ---- openFDA enforcement ---------------------------------------------------
+#
+# Adds food, drug and device recalls alongside CPSC consumer products. The FDA
+# endpoints are free and need no auth at modest volume. Records are namespaced
+# (`fda-food-...`) so IDs cannot collide with CPSC's numeric ones.
+
+OPENFDA_ENDPOINTS = ("food", "drug", "device")
+_OPENFDA_PAGE = 1000  # openFDA caps a single request at 1000
+
+
+def _fda_date(raw: str | None) -> str | None:
+    """openFDA dates are YYYYMMDD; normalise to ISO-8601."""
+    if raw and len(raw) == 8 and raw.isdigit():
+        return f"{raw[0:4]}-{raw[4:6]}-{raw[6:8]}"
+    return None
+
+
+def _flatten_fda(rec: dict, endpoint: str) -> dict[str, Any] | None:
+    recall_number = (rec.get("recall_number") or "").strip()
+    if not recall_number:
+        return None
+
+    firm = (rec.get("recalling_firm") or "").strip()
+    product = (rec.get("product_description") or "").strip()
+    reason = (rec.get("reason_for_recall") or "").strip()
+
+    title = f"{firm} recalls {product[:90]}".strip() if product else f"FDA recall {recall_number}"
+    if len(title) > 160:
+        title = title[:157] + "..."
+
+    parts = [
+        product,
+        reason,
+        firm,
+        rec.get("code_info"),
+        rec.get("classification"),
+        rec.get("distribution_pattern"),
+    ]
+    entry_text = " | ".join(p for p in parts if p)
+
+    return {
+        "recall_id": f"fda-{endpoint}-{recall_number}",
+        "market": "US",
+        "source": f"fda-{endpoint}",
+        "title": title,
+        "recall_date": _fda_date(rec.get("recall_initiation_date")) or _fda_date(rec.get("report_date")),
+        "hazard": (reason[:600] or None),
+        "remedy": (rec.get("voluntary_mandated") or None),
+        "entry_text": entry_text,
+        # A per-record, resolvable citation rather than a generic landing page.
+        "source_url": (
+            f"https://api.fda.gov/{endpoint}/enforcement.json"
+            f"?search=recall_number:%22{quote(recall_number)}%22"
+        ),
+        "raw": rec,
+    }
+
+
+def fetch_fda(
+    endpoint: str,
+    limit: int = 1000,
+    cache_dir: str | Path | None = None,
+) -> list[dict]:
+    """Fetch openFDA enforcement records for one endpoint (food|drug|device)."""
+    if endpoint not in OPENFDA_ENDPOINTS:
+        raise ValueError(f"unknown openFDA endpoint: {endpoint}")
+
+    cache_file = Path(cache_dir) / f"fda_{endpoint}.json" if cache_dir else None
+    if cache_file and cache_file.exists():
+        return json.loads(cache_file.read_text("utf-8"))
+
+    out: list[dict] = []
+    skip = 0
+    while len(out) < limit:
+        page = min(_OPENFDA_PAGE, limit - len(out))
+        try:
+            resp = httpx.get(
+                f"https://api.fda.gov/{endpoint}/enforcement.json",
+                params={"limit": page, "skip": skip, "sort": "report_date:desc"},
+                timeout=180.0,
+            )
+        except httpx.HTTPError as exc:
+            log.warning("openFDA %s request failed: %s", endpoint, exc)
+            break
+        if resp.status_code != 200:
+            log.warning("openFDA %s returned HTTP %s", endpoint, resp.status_code)
+            break
+        results = resp.json().get("results") or []
+        if not results:
+            break
+        out.extend(results)
+        skip += len(results)
+        if len(results) < page:
+            break
+
+    out = out[:limit]
+    if cache_file:
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(json.dumps(out), "utf-8")
+    return out
+
+
+def ingest_fda(store: Store, records: list[dict], endpoint: str) -> dict[str, int]:
+    new_count = 0
+    updated_count = 0
+    seen = 0
+    for rec in records:
+        flat = _flatten_fda(rec, endpoint)
+        if not flat:
+            continue
+        seen += 1
+        existed = store.recall_by_id(flat["recall_id"]) is not None
+        store.upsert_recall(flat)
+        if existed:
+            updated_count += 1
+        else:
+            new_count += 1
+            store.add_event(
+                event_type="recall",
+                title=f"FDA {endpoint} recall: {flat['title']}",
+                source_url=flat["source_url"],
+                detail=flat["hazard"],
+                happened_at=flat["recall_date"],
+                payload={"recall_id": flat["recall_id"], "source": flat["source"]},
+            )
+    return {"new": new_count, "updated": updated_count, "seen": seen}
 
 
 def load_facts(store: Store, path: str | Path) -> dict[str, int]:

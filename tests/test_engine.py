@@ -93,6 +93,57 @@ def test_change_feed_is_populated():
         assert c["source_url"].startswith("http")
 
 
+def test_fda_records_map_and_are_searchable():
+    """FDA enforcement records must land in the same store and be searchable.
+
+    Hermetic: uses a synthetic record, no network.
+    """
+    import tempfile
+
+    from verity.compile import _fda_date, _flatten_fda, ingest_fda
+
+    assert _fda_date("20260813") == "2026-08-13"
+    assert _fda_date("") is None
+    assert _fda_date("garbage") is None
+
+    rec = {
+        "recall_number": "F-9999-2026",
+        "recalling_firm": "Test Foods LLC",
+        "product_description": "Test Brand Organic Spinach 5oz",
+        "reason_for_recall": "Listeria monocytogenes contamination",
+        "recall_initiation_date": "20260813",
+        "report_date": "20260909",
+        "classification": "Class I",
+        "distribution_pattern": "Nationwide",
+        "voluntary_mandated": "Voluntary: Firm initiated",
+    }
+
+    flat = _flatten_fda(rec, "food")
+    assert flat is not None
+    assert flat["recall_id"] == "fda-food-F-9999-2026", "IDs must be namespaced per source"
+    assert flat["source"] == "fda-food"
+    assert flat["recall_date"] == "2026-08-13"
+    assert "spinach" in flat["entry_text"].lower()
+    assert flat["source_url"].startswith("https://api.fda.gov/")
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        store = Store(Path(tmp) / "t.sqlite3")
+        try:
+            assert ingest_fda(store, [rec], "food")["new"] == 1
+            assert store.counts_by_source() == {"fda-food": 1}
+            hits = Engine(store).search_recalls("organic spinach")
+            assert hits, "an FDA record must be findable"
+            assert hits[0]["source_url"].startswith("https://api.fda.gov/")
+        finally:
+            store.close()
+
+
+def test_fda_record_missing_recall_number_is_skipped():
+    from verity.compile import _flatten_fda
+
+    assert _flatten_fda({"product_description": "no id"}, "food") is None
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

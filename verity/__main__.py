@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from . import __version__
-from .compile import fetch_cpsc, ingest_cpsc, load_facts
+from .compile import OPENFDA_ENDPOINTS, fetch_cpsc, fetch_fda, ingest_cpsc, ingest_fda, load_facts
 from .store import Store
 
 DEFAULT_DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
@@ -22,9 +22,17 @@ def cmd_build(args: argparse.Namespace) -> int:
 
     cpsc = fetch_cpsc(max_records=args.max_recalls, cache_path=args.cache)
     result = ingest_cpsc(store, cpsc, max_records=args.max_recalls)
-    print(
-        f"recalls: new={result['new']} updated={result['updated']} seen={result['seen']}"
-    )
+    print(f"cpsc:            new={result['new']:<6} updated={result['updated']:<6} seen={result['seen']}")
+
+    # FDA coverage is opt-out (--fda-limit 0) so CI can stay hermetic and offline.
+    if args.fda_limit > 0:
+        cache_dir = str(Path(args.cache).parent) if args.cache else None
+        for endpoint in OPENFDA_ENDPOINTS:
+            records = fetch_fda(endpoint, limit=args.fda_limit, cache_dir=cache_dir)
+            res = ingest_fda(store, records, endpoint)
+            print(
+                f"fda-{endpoint:<10}  new={res['new']:<6} updated={res['updated']:<6} seen={res['seen']}"
+            )
 
     print(f"\nstore: {DEFAULT_DB}")
     for key, value in store.stats().items():
@@ -71,6 +79,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--rules", default=str(DEFAULT_RULES))
     p.add_argument("--max-recalls", type=int, default=None)
     p.add_argument("--cache", default=None, help="path to cached CPSC JSON, or where to write it")
+    p.add_argument(
+        "--fda-limit",
+        type=int,
+        default=2000,
+        help="records per openFDA endpoint (food/drug/device); 0 disables FDA ingestion",
+    )
     p.set_defaults(func=cmd_build)
 
     p = sub.add_parser("stats", help="show store statistics")

@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS recalls (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     recall_id      TEXT    NOT NULL UNIQUE,
     market         TEXT    NOT NULL DEFAULT 'US',
+    source         TEXT    NOT NULL DEFAULT 'cpsc',
     title          TEXT    NOT NULL,
     recall_date    TEXT,
     hazard         TEXT,
@@ -93,6 +94,15 @@ class Store:
         self._conn = sqlite3.connect(self.path, isolation_level=None)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Forward-only migrations for databases created by older versions."""
+        cols = {row["name"] for row in self._conn.execute("PRAGMA table_info(recalls)")}
+        if "source" not in cols:
+            self._conn.execute(
+                "ALTER TABLE recalls ADD COLUMN source TEXT NOT NULL DEFAULT 'cpsc'"
+            )
 
     def close(self) -> None:
         self._conn.close()
@@ -233,18 +243,19 @@ class Store:
             conn.execute(
                 """
                 INSERT INTO recalls
-                    (recall_id, market, title, recall_date, hazard, remedy,
+                    (recall_id, market, source, title, recall_date, hazard, remedy,
                      entry_text, source_url, raw_json, ingested_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(recall_id) DO UPDATE SET
                     title=excluded.title, recall_date=excluded.recall_date,
                     hazard=excluded.hazard, remedy=excluded.remedy,
                     entry_text=excluded.entry_text, source_url=excluded.source_url,
-                    raw_json=excluded.raw_json
+                    source=excluded.source, raw_json=excluded.raw_json
                 """,
                 (
                     recall["recall_id"],
                     recall.get("market", "US"),
+                    recall.get("source", "cpsc"),
                     recall["title"],
                     recall.get("recall_date"),
                     recall.get("hazard"),
@@ -267,6 +278,13 @@ class Store:
 
     def recall_count(self) -> int:
         return int(self._conn.execute("SELECT COUNT(*) FROM recalls").fetchone()[0])
+
+    def counts_by_source(self) -> dict[str, int]:
+        """Recall counts per upstream source, e.g. {'cpsc': 10016, 'fda-food': 29406}."""
+        rows = self._conn.execute(
+            "SELECT source, COUNT(*) AS n FROM recalls GROUP BY source ORDER BY n DESC"
+        ).fetchall()
+        return {row["source"]: int(row["n"]) for row in rows}
 
     def all_recalls(self) -> list[sqlite3.Row]:
         return list(
