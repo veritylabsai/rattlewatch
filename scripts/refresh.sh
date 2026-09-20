@@ -52,11 +52,14 @@ gcloud run deploy verity-api \
   --project "${PROJECT}" --quiet
 
 echo "[refresh] deploying verity-mcp"
+# NOTE: use `--flag=value` here, not `--flag value`. The --args value begins with
+# "-", so the space-separated form is parsed as another flag and gcloud prints
+# its help instead of deploying (exit 2).
 gcloud run deploy verity-mcp \
-  --image "${IMAGE}" --region "${REGION}" \
-  --allow-unauthenticated --port 8000 --memory 512Mi --cpu 1 \
-  --max-instances 1 --min-instances 0 \
-  --command python --args "-m,verity,mcp,--http,--host,0.0.0.0,--port,8000" \
-  --project "${PROJECT}" --quiet
+  --image="${IMAGE}" --region="${REGION}" \
+  --allow-unauthenticated --port=8000 --memory=512Mi --cpu=1 \
+  --max-instances=1 --min-instances=0 \
+  --command=python --args="-m,verity,mcp,--http,--host,0.0.0.0,--port,8000" \
+  --project="${PROJECT}" --quiet
 
 echo "[refresh] done $(date -u +%Y-%m-%dT%H:%M:%SZ)"
