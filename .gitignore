@@ -12,6 +12,10 @@ var/
 *.sqlite3-wal
 *.sqlite3-shm
 
+# openFDA fetch cache: large machine-generated snapshots, not curated fixtures.
+# (tests/fixtures/recalls.json IS curated and committed deliberately.)
+tests/fixtures/fda_*.json
+
 # OS / editor
 .DS_Store
 Thumbs.db
