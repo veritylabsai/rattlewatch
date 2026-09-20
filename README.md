@@ -169,4 +169,19 @@ what is *not* tested. A green run is not the same as "verified secure."
 
 ## License
 
-Proprietary. See `DEPLOY.md` for operational notes.
+**MIT** — see [LICENSE](LICENSE).
+
+The **code** is open source; the **hosted service** is the product. Nothing about
+the moat lives in the source: the defensible asset is the curated,
+daily-refreshed, cited corpus and the freshness pipeline that maintains it.
+Open-sourcing the code also means the citation machinery is auditable — which
+matters for a product whose entire claim is that its answers can be trusted.
+
+You can self-host it:
+
+```bash
+docker build -t verity .
+docker run -p 8000:8000 verity
+```
+
+Or use the hosted endpoint: <https://verity-api-243195959173.us-central1.run.app>
