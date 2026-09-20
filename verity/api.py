@@ -300,6 +300,22 @@ def mcp_server_card_alt() -> dict[str, Any]:
     return discovery.server_card()
 
 
+@app.get("/.well-known/glama.json", include_in_schema=False)
+def glama_claim() -> dict[str, Any]:
+    """Ownership claim for the Glama registry.
+
+    Glama probes this path; serving it lets the listing be claimed
+    automatically instead of through a manual web submission.
+    """
+    return discovery.GLAMA_JSON
+
+
+@app.get("/robots.txt", include_in_schema=False, response_class=PlainTextResponse)
+def robots() -> PlainTextResponse:
+    """Crawlers are welcome — being discovered is the point."""
+    return PlainTextResponse(discovery.ROBOTS_TXT, media_type="text/plain; charset=utf-8")
+
+
 @app.get("/v1/recalls/search")
 def search_recalls(
     request: Request,

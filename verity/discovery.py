@@ -123,3 +123,32 @@ def server_card() -> dict:
             "openapi": f"{API_URL}/docs",
         },
     }
+
+
+# Glama probes /.well-known/glama.json to verify ownership of a listing. The
+# `maintainers` entry is the claim and must match the GitHub account. Serving
+# this lets Glama index and verify the server without a manual submission --
+# which in turn unblocks the awesome-list PRs that require a Glama badge.
+GLAMA_JSON = {
+    "$schema": "https://glama.ai/mcp/schemas/server.json",
+    "name": "verity",
+    "description": SHORT_DESCRIPTION,
+    "repository": REPO_URL,
+    "license": "MIT",
+    "tools": 4,
+    "transport": ["http"],
+    "runtime": "python",
+    "maintainers": ["veritylabsai"],
+}
+
+
+# Explicitly welcome crawlers. This service exists to be discovered by agents,
+# so a missing robots.txt (previously a 404) was actively unhelpful.
+ROBOTS_TXT = """# Verity is a public, read-only API intended to be found and used by agents.
+# Crawlers, registries and indexers are explicitly welcome.
+
+User-agent: *
+Allow: /
+
+# No crawl-delay: the API is rate limited per client at the edge.
+"""

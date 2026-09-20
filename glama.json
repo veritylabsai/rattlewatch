@@ -1,0 +1,11 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "name": "verity",
+  "description": "Cited product-compliance ground truth for AI agents. Never generates; always cites.",
+  "repository": "https://github.com/veritylabsai/verity",
+  "license": "MIT",
+  "tools": 4,
+  "transport": ["http"],
+  "runtime": "python",
+  "maintainers": ["veritylabsai"]
+}

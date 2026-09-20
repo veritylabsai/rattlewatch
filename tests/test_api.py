@@ -253,6 +253,32 @@ def test_server_card_alias_matches():
     assert a == b, "the two server-card filenames must agree"
 
 
+def test_glama_claim_is_served_and_names_the_owner():
+    """Glama probes this path to verify ownership of a listing."""
+    r = _get("/.well-known/glama.json")
+    assert r.status_code == 200, "Glama's ownership-claim path must not 404"
+    body = r.json()
+    assert "veritylabsai" in body["maintainers"], "the claim must name the GitHub owner"
+    assert body["repository"].startswith("https://github.com/veritylabsai/")
+    assert body["$schema"].startswith("https://glama.ai/")
+
+
+def test_repo_root_glama_claim_matches_served_one():
+    """The repo file and the served path must not drift apart."""
+    import json
+    from pathlib import Path as _P
+
+    repo_file = _P(__file__).resolve().parent.parent / "glama.json"
+    assert repo_file.exists(), "glama.json should exist at the repo root"
+    assert json.loads(repo_file.read_text("utf-8")) == _get("/.well-known/glama.json").json()
+
+
+def test_robots_txt_welcomes_crawlers():
+    r = _get("/robots.txt")
+    assert r.status_code == 200, "a 404 here is actively unhelpful for discovery"
+    assert "Allow: /" in r.text
+
+
 # ---- correctness preserved -------------------------------------------------
 
 
