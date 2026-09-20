@@ -21,9 +21,28 @@ tar -xzf /tmp/src.tgz -C /src --strip-components=1
 cd /src
 
 echo "[refresh] building ${IMAGE}"
-# --suppress-logs: the job's service account can write logs but cannot stream
-# them, and gcloud treats a streaming failure as a build failure.
+#
+# IMPORTANT: `gcloud builds submit` exits non-zero for a service account that is
+# not a project Viewer/Owner, because it cannot stream build logs -- even though
+# the BUILD ITSELF SUCCEEDS and the image is pushed. Under `set -e` that would
+# abort the refresh before the deploy steps (which is exactly what happened).
+# So tolerate the exit code, then verify the build independently instead of
+# trusting the CLI.
+set +e
 gcloud builds submit --tag "${IMAGE}" --project "${PROJECT}" --suppress-logs --quiet
+submit_rc=$?
+set -e
+
+if [ "${submit_rc}" -ne 0 ]; then
+  echo "[refresh] submit returned ${submit_rc}; verifying build status independently"
+  latest_status=$(gcloud builds list --project "${PROJECT}" --limit=1 --format="value(status)")
+  echo "[refresh] most recent build status: ${latest_status}"
+  if [ "${latest_status}" != "SUCCESS" ]; then
+    echo "[refresh] build did NOT succeed; aborting"
+    exit 1
+  fi
+  echo "[refresh] build succeeded despite the CLI exit code; continuing"
+fi
 
 echo "[refresh] deploying verity-api"
 gcloud run deploy verity-api \
