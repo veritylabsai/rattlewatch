@@ -21,7 +21,9 @@ tar -xzf /tmp/src.tgz -C /src --strip-components=1
 cd /src
 
 echo "[refresh] building ${IMAGE}"
-gcloud builds submit --tag "${IMAGE}" --project "${PROJECT}" --quiet
+# --suppress-logs: the job's service account can write logs but cannot stream
+# them, and gcloud treats a streaming failure as a build failure.
+gcloud builds submit --tag "${IMAGE}" --project "${PROJECT}" --suppress-logs --quiet
 
 echo "[refresh] deploying verity-api"
 gcloud run deploy verity-api \
