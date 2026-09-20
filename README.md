@@ -9,6 +9,13 @@ hallucination is most expensive: cross-border product compliance.
 **MCP endpoint:** https://verity-api-243195959173.us-central1.run.app/mcp
 **Interactive docs:** https://verity-api-243195959173.us-central1.run.app/docs
 
+Machine-readable discovery, for agents rather than browsers:
+
+| Document | URL |
+|---|---|
+| `llms.txt` | [/llms.txt](https://verity-api-243195959173.us-central1.run.app/llms.txt) |
+| MCP server card | [/\.well-known/mcp/server.json](https://verity-api-243195959173.us-central1.run.app/.well-known/mcp/server.json) |
+
 One container serves **both** surfaces — the REST API and MCP over streamable
 HTTP at `/mcp`. That matters for registry discovery: directories introspect the
 image's default command, so it has to be a working MCP server.

@@ -27,10 +27,11 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, Field
 
+from . import discovery
 from .engine import MAX_QUERY_CHARS, Engine
 from .mcp_server import mcp as verity_mcp
 from .store import Store
@@ -228,6 +229,9 @@ def root() -> dict[str, Any]:
             "changes": "/v1/changes?since=2026-09-01T00:00:00+00:00",
             "verify": "POST /v1/verify",
             "premium_export": "GET /v1/premium/export (API key or x402 payment)",
+            "mcp": "/mcp (streamable HTTP)",
+            "llms_txt": "/llms.txt",
+            "server_card": "/.well-known/mcp/server.json",
         },
     }
 
@@ -269,6 +273,31 @@ def stats(request: Request) -> dict[str, Any]:
         "corpus_built_at": built_at,
         "data_age_hours": age_hours,
     }
+
+
+# ---- machine-readable discovery -------------------------------------------
+
+
+@app.get("/llms.txt", include_in_schema=False)
+def llms_txt() -> PlainTextResponse:
+    """Plain-text service summary for LLMs and agents.
+
+    Served from live code rather than a static file so it cannot drift from what
+    the service actually does.
+    """
+    return PlainTextResponse(discovery.LLMS_TXT, media_type="text/plain; charset=utf-8")
+
+
+@app.get("/.well-known/mcp/server.json", include_in_schema=False)
+def mcp_server_card() -> dict[str, Any]:
+    """MCP server card, for directories and clients that discover endpoints."""
+    return discovery.server_card()
+
+
+@app.get("/.well-known/mcp/server-card.json", include_in_schema=False)
+def mcp_server_card_alt() -> dict[str, Any]:
+    """Alias — different directories probe different filenames."""
+    return discovery.server_card()
 
 
 @app.get("/v1/recalls/search")

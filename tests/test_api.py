@@ -224,6 +224,35 @@ def test_mcp_path_does_not_redirect():
     assert r.status_code != 307, "POST /mcp must not redirect"
 
 
+# ---- machine-readable discovery -------------------------------------------
+
+
+def test_llms_txt_is_served():
+    r = _get("/llms.txt")
+    assert r.status_code == 200
+    assert "text/plain" in r.headers.get("content-type", "")
+    body = r.text
+    # Must describe the real tools and the real endpoint, or it is worse than absent.
+    for tool in ("search_recalls", "get_requirement", "list_changes", "verify"):
+        assert tool in body, f"{tool} missing from llms.txt"
+    assert "/mcp" in body
+
+
+def test_mcp_server_card_is_served():
+    r = _get("/.well-known/mcp/server.json")
+    assert r.status_code == 200
+    card = r.json()
+    assert card["name"] == "verity"
+    assert any(t["type"] == "streamable-http" for t in card["transports"])
+    assert len(card["tools"]) == 4
+
+
+def test_server_card_alias_matches():
+    a = _get("/.well-known/mcp/server.json").json()
+    b = _get("/.well-known/mcp/server-card.json").json()
+    assert a == b, "the two server-card filenames must agree"
+
+
 # ---- correctness preserved -------------------------------------------------
 
 
