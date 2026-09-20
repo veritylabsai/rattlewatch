@@ -19,9 +19,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Build the ground-truth store into the image (re-ingests the live CPSC feed).
-# `|| true` keeps the image buildable if the upstream feed is briefly unavailable;
-# the service still starts and serves whatever was baked in.
-RUN python -m verity build --max-recalls 5000 || true
+#
+# Overridable so CI can build hermetically from the test fixture instead of
+# hitting the live feed:
+#   docker build --build-arg VERITY_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50" .
+#
+# `|| true` keeps the image buildable if the upstream feed is briefly
+# unavailable; the service still starts and serves whatever was baked in.
+ARG VERITY_BUILD_ARGS="--max-recalls 5000"
+RUN python -m verity build ${VERITY_BUILD_ARGS} || true
 
 # Hand ownership to the unprivileged user, then drop privileges.
 RUN chown -R verity:verity /app

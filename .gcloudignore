@@ -1,6 +1,7 @@
 # Keep the Cloud Build upload small: exclude the virtualenv, git history, and
 # generated runtime data. Everything needed to build the image is kept.
 .git/
+.github/
 .venv/
 venv/
 env/

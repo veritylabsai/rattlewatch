@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
+      VERITY_DB: var/verity.sqlite3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile check
+        run: python -m compileall -q verity
+
+      - name: Build ground-truth store from fixture (no network)
+        run: python -m verity build --cache tests/fixtures/recalls.json --max-recalls 50
+
+      - name: Engine tests — correctness and non-hallucination
+        run: python tests/test_engine.py
+
+      - name: Security and abuse tests
+        run: python tests/test_api.py
+
+  container:
+    name: Container hardening
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image (hermetic — fixture, not the live feed)
+        run: |
+          docker build \
+            --build-arg VERITY_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50" \
+            -t verity-ci .
+
+      - name: Assert the container does not run as root
+        run: |
+          docker run --rm --entrypoint python verity-ci \
+            -c "import os,sys; print('uid=', os.getuid()); sys.exit(0 if os.getuid() != 0 else 1)"
+
+      - name: Smoke test the API inside the container
+        run: |
+          docker run -d --name verity-ci -p 8000:8000 verity-ci
+          ok=0
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health >/dev/null; then ok=1; break; fi
+            sleep 2
+          done
+          echo "--- container logs ---"
+          docker logs verity-ci || true
+          echo "--- health ---"
+          curl -sf http://localhost:8000/health
+          test "$ok" = "1" || { echo "API did not become healthy"; exit 1; }
+
+      - name: Assert security headers are served
+        run: |
+          hdrs=$(curl -sI http://localhost:8000/health | tr -d '\r')
+          echo "$hdrs"
+          echo "$hdrs" | grep -qi "x-content-type-options: nosniff" || { echo "missing nosniff"; exit 1; }
+          echo "$hdrs" | grep -qi "x-frame-options: DENY" || { echo "missing X-Frame-Options"; exit 1; }
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f verity-ci || true

@@ -1,0 +1,17 @@
+# Keep the Docker build context small. NOTE: tests/ is intentionally NOT
+# excluded — CI builds hermetically from tests/fixtures/recalls.json.
+.git
+.github
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*.egg-info
+var
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+.env
+*.pem
+*credentials*.json
