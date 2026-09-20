@@ -56,26 +56,35 @@ when the image's CMD is overridden to a non-default port.
 4. Deploy. Note the free tier sleeps after ~15 min idle and cold-starts on the
    next request — acceptable for an API that agents call on demand.
 
-## Promotion (this is the part that needs no ongoing human)
+## Promotion status
 
-The thesis: **discovery is inbound via agentic registries, not outbound marketing.**
-Publish once, then it is findable.
+> 🚧 **The critical path is ONE web action: submit Verity to Glama.**
+> Both `awesome-mcp-servers` (95k★) and `awesome-remote-mcp-servers` require a
+> Glama score badge on every entry, so both PRs are blocked behind a Glama
+> listing. Glama has no public submission API — it needs the web form at
+> <https://glama.ai/mcp/servers> (and for a hosted server, also
+> <https://glama.ai/mcp/connectors>). Nothing else on this page is blocked.
 
-1. **Push the repo to GitHub** (public). Write the description to speak to *both*
-   humans and agents (the `README.md` is already agent-facing).
-2. **List the MCP server** in the directories agents and developers actually search:
-   - [mcp.so](https://mcp.so)
-   - [Smithery](https://smithery.ai)
-   - [Glama MCP registry](https://glama.ai/mcp)
-   - [PulseMCP](https://pulsemcp.com)
-   - the official [MCP registry](https://github.com/modelcontextprotocol/servers)
-   Use the copy in `docs/registry-listing.md`.
-3. **List the premium endpoint** in the [x402 Bazaar](https://docs.x402.org/extensions/bazaar)
-   discovery layer once the payment rail is wired.
+| Channel | Status |
+|---|---|
+| **Official MCP Registry** | ✅ live — `io.github.veritylabsai/verity` v0.1.0 |
+| GitHub topics + tagged release | ✅ done (12 discovery topics) |
+| `awesome-mcp-servers` (95k★) | ⏳ PR [#14759](https://github.com/punkpeye/awesome-mcp-servers/pull/14759) open, mergeable — **blocked on the Glama badge** |
+| `awesome-remote-mcp-servers` | ⏳ same Glama requirement |
+| **Glama** | ❌ not listed — needs <https://glama.ai/mcp/servers> |
+| **Smithery** | ❌ not listed — needs <https://smithery.ai/new> (paste the endpoint URL) |
+| PulseMCP / mcp.so | auto-sync from the official registry; not present yet |
 
-That is the whole promotion strategy. No ads, no social, no outreach — the
-product's job is to be *discoverable, understandable, and trusted*, and every
-answer carries a citation to make the "trusted" part automatic.
+Once Glama lists the connector, add the badge line to the PR description and the
+entry becomes mergeable:
+
+```
+[![veritylabsai/verity MCP server](https://glama.ai/mcp/servers/veritylabsai/verity/badges/score.svg)](https://glama.ai/mcp/servers/veritylabsai/verity)
+```
+
+**Everything else is automated**: the daily refresh, the CI gate, and the
+freshness health check all run without intervention.
+
 
 ## Ongoing operations (now automated)
 
