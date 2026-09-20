@@ -1,0 +1,135 @@
+# Verity
+
+**Cited, current, versioned ground truth for AI agents** — in the one domain where
+hallucination is most expensive: cross-border product compliance.
+
+Verity answers the questions an agent cannot safely answer itself:
+
+- *Is this product, brand, or model number subject to a recall?*
+- *What certification does a children's product need to enter the US market?*
+- *What did the ground truth change this week?*
+
+Every answer carries an **official source URL** and a **last-verified date**. Verity
+**never generates an answer** — it returns records that exist in its store, or it
+says *"no verified record"*. Absence is an honest negative, not a guess.
+
+---
+
+## The trust guarantee
+
+> An answer without a citation does not ship.
+
+- **Cited** — every fact and recall is pinned to an official source (CPSC, EUR-Lex,
+  ECHA, the European Commission, OEHHA).
+- **Versioned** — facts are append-only. A changed answer creates a new version and
+  a change event, never an in-place edit.
+- **Current** — the store is re-verified against its upstream sources on a schedule;
+  `verified_at` tells you exactly when.
+- **Non-generative** — `verify()` returns only matching records. If nothing matches,
+  it returns `found: false` with an explicit reason. It will not invent one.
+
+---
+
+## Tools (MCP)
+
+| Tool | What it returns |
+|---|---|
+| `search_recalls` | Cited recall records matching a product name, brand, model, or UPC |
+| `get_requirement` | Cited compliance requirements for a subject + market |
+| `list_changes` | The change feed: new recalls and rule changes since a timestamp |
+| `verify` | Cited records matching a claim/query, or an explicit `no verified record` |
+
+## Data coverage
+
+- **Recalls**: the full structured U.S. CPSC recall feed (title, hazard, remedy,
+  models, retailers, source URL), flattened for search.
+- **Requirements**: a seed of cited cross-border product-compliance facts —
+  CPSIA/Children's Product Certificate, CPSC eFiling, EU GPSR, CE marking,
+  REACH SVHCs, RoHS, and California Prop 65 — each with a verbatim citation.
+
+The engine is domain-agnostic: new markets (UK, CA, AU, JP, and beyond) and new
+rule sets are added as more cited facts and feeds are compiled, without code change.
+
+---
+
+## Quick start
+
+```bash
+python -m venv .venv && .venv/Scripts/activate   # or: source .venv/bin/activate
+pip install -r requirements.txt
+
+# build the store (facts + CPSC recalls)
+python -m verity build
+
+# run as an MCP server over stdio (local agents)
+python -m verity mcp
+
+# or serve the REST API + MCP over HTTP
+python -m verity serve --host 0.0.0.0 --port 8000
+```
+
+### Connect a client
+
+```json
+{
+  "mcpServers": {
+    "verity": {
+      "command": "python",
+      "args": ["-m", "verity", "mcp"],
+      "cwd": "/path/to/verity"
+    }
+  }
+}
+```
+
+---
+
+## REST API
+
+| Endpoint | Tier |
+|---|---|
+| `GET /v1/recalls/search?q=...` | Free (rate-limited) |
+| `GET /v1/requirements?subject=...&market=...` | Free |
+| `GET /v1/changes?since=...` | Free |
+| `POST /v1/verify` | Free |
+| `GET /v1/premium/export` | Metered — returns HTTP `402` with an x402 payment requirement |
+
+Interactive docs: `/docs`.
+
+## Pricing
+
+Free discovery and lookups, metered premium calls. The premium endpoint implements
+the **x402** payment flow: the server returns `402 Payment Required` with a
+structured payment requirement, and a paying agent retries with proof of payment.
+This is the monetization thesis in one endpoint — *agents discover, agents pay*.
+The payment rail (x402/USDC or Stripe metered billing) is wired at deploy time.
+
+---
+
+## Repository
+
+```
+verity/
+  verity/
+    store.py      # ground-truth store (facts, recalls, events, sources)
+    compile.py    # ingest CPSC + cited rules
+    engine.py     # query logic (search, verify, change feed)
+    textutil.py   # normalization + matching primitives
+    mcp_server.py # MCP server (stdio + streamable HTTP)
+    api.py        # FastAPI REST + x402 stub
+    __main__.py   # CLI: build / stats / serve / mcp
+  data/rules/seed.yaml   # cited facts
+  tests/test_engine.py   # correctness + no-hallucination tests
+```
+
+## Why this matters
+
+AI generates infinite plausible text for free, so content is worth nothing. But AI
+hallucinates — especially on current rules, specific numbers, and what changed last
+week. Verity is the opposite of a generative model: a small, boring, cited layer of
+truth that agents and the software they power can depend on when being wrong is
+expensive.
+
+## License
+
+Proprietary. See `DEPLOY.md` for operational notes.

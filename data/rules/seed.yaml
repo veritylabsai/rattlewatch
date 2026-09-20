@@ -1,0 +1,108 @@
+# Verity seed facts — cross-border product compliance
+#
+# Every fact MUST carry citation_url. citation_text is a verbatim snippet where
+# one was captured at compile time; otherwise it is left empty and the URL is
+# the citation. These are intentionally conservative, well-established facts
+# only. The store rejects any fact missing an answer or citation.
+
+facts:
+  - key: us-childrens-product-certificate
+    kind: requirement
+    market: US
+    subject: childrens_products
+    question: "Do children's products sold in the US require testing and certification?"
+    answer: >-
+      Children's products that are subject to a children's product safety rule
+      require third-party testing by a CPSC-accepted laboratory and a written
+      Children's Product Certificate (CPC). This is required by Section 14 of
+      the CPSA, as codified in 16 CFR part 1110.
+    citation_url: https://www.cpsc.gov/Business--Manufacturing/Testing-Certification/Childrens-Product-Certificate
+    citation_text: >-
+      "Children's products, a consumer product designed or intended primarily
+      for children 12 years of age or younger, that are subject to a consumer
+      product safety rule ... require third-party testing and certification."
+    source_name: U.S. Consumer Product Safety Commission (CPSC)
+
+  - key: us-cpsc-efiling
+    kind: requirement
+    market: US
+    subject: imports
+    question: "Is electronic filing of certificates of compliance required for US imports?"
+    answer: >-
+      Beginning July 8, 2026, importers of most regulated consumer products are
+      required to electronically file (eFile) certificates of compliance with
+      U.S. Customs and Border Protection (CBP) via a Partner Government Agency
+      (PGA) Message Set.
+    citation_url: https://www.cpsc.gov/Business--Manufacturing/Testing-Certification/Childrens-Product-Certificate
+    citation_text: >-
+      "Beginning July 8, 2026, importers of most regulated consumer products will
+      be required to electronically file (eFile) certificates of compliance with
+      U.S. Customs and Border Protection (CBP), via a Partner Government Agency
+      (PGA) Message Set."
+    source_name: U.S. Consumer Product Safety Commission (CPSC)
+
+  - key: eu-gpsr-applicability
+    kind: requirement
+    market: EU
+    subject: consumer_products
+    question: "What is the EU General Product Safety Regulation and when does it apply?"
+    answer: >-
+      Regulation (EU) 2023/988 on general product safety (the General Product
+      Safety Regulation, GPSR) applies from 13 December 2024 and sets safety
+      requirements for consumer products placed or made available on the EU
+      market, including requirements for a responsible economic operator in the
+      EU.
+    citation_url: https://eur-lex.europa.eu/eli/reg/2023/988/oj
+    source_name: EUR-Lex (European Union)
+
+  - key: eu-ce-marking
+    kind: requirement
+    market: EU
+    subject: consumer_products
+    question: "When is CE marking required for products sold in the EU?"
+    answer: >-
+      CE marking is mandatory for products covered by EU harmonisation
+      legislation before they are placed on the EU market. It indicates
+      conformity with the applicable EU requirements. Products outside the scope
+      of harmonisation legislation generally may not bear CE marking.
+    citation_url: https://single-market-economy.ec.europa.eu/single-market/ce-marking_en
+    source_name: European Commission
+
+  - key: us-prop65-warning
+    kind: requirement
+    market: US
+    subject: consumer_products
+    question: "Does selling products in California require a Proposition 65 warning?"
+    answer: >-
+      Under California Proposition 65, businesses must provide a clear and
+      reasonable warning before knowingly and intentionally exposing individuals
+      to a chemical that has been listed by the State as causing cancer or
+      reproductive harm, unless an exemption applies.
+    citation_url: https://oehha.ca.gov/proposition-65
+    source_name: California OEHHA
+
+  - key: eu-reach-svhc
+    kind: requirement
+    market: EU
+    subject: chemicals
+    question: "What are SVHCs under REACH and what duties do they trigger?"
+    answer: >-
+      Under REACH (Regulation (EC) No 1907/2006), ECHA maintains the Candidate
+      List of Substances of Very High Concern (SVHCs). Suppliers have
+      notification and communication duties for SVHCs present in articles above
+      0.1% weight by weight, subject to the conditions in Articles 7 and 33.
+    citation_url: https://echa.europa.eu/candidate-list-table
+    source_name: European Chemicals Agency (ECHA)
+
+  - key: eu-rohs
+    kind: requirement
+    market: EU
+    subject: electronics
+    question: "What does RoHS restrict for electrical and electronic equipment in the EU?"
+    answer: >-
+      Directive 2011/65/EU (RoHS) restricts the use of certain hazardous
+      substances (including lead, mercury, cadmium, hexavalent chromium, and
+      certain flame retardants) in electrical and electronic equipment placed on
+      the EU market.
+    citation_url: https://environment.ec.europa.eu/topics/waste-and-recycling/rohs-directive_en
+    source_name: European Commission
