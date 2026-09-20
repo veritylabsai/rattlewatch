@@ -6,7 +6,12 @@
 hallucination is most expensive: cross-border product compliance.
 
 **Live API:** https://verity-api-243195959173.us-central1.run.app
+**MCP endpoint:** https://verity-api-243195959173.us-central1.run.app/mcp
 **Interactive docs:** https://verity-api-243195959173.us-central1.run.app/docs
+
+One container serves **both** surfaces — the REST API and MCP over streamable
+HTTP at `/mcp`. That matters for registry discovery: directories introspect the
+image's default command, so it has to be a working MCP server.
 
 ```bash
 curl "https://verity-api-243195959173.us-central1.run.app/v1/recalls/search?q=Bistro%20Pro%20Electric%20Grill"
