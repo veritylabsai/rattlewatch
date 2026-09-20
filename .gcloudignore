@@ -1,0 +1,13 @@
+# Keep the Cloud Build upload small: exclude the virtualenv, git history, and
+# generated runtime data. Everything needed to build the image is kept.
+.git/
+.venv/
+venv/
+env/
+var/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+.env

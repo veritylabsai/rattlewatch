@@ -3,6 +3,14 @@
 **Cited, current, versioned ground truth for AI agents** — in the one domain where
 hallucination is most expensive: cross-border product compliance.
 
+**Live API:** https://verity-api-243195959173.us-central1.run.app
+**Interactive docs:** https://verity-api-243195959173.us-central1.run.app/docs
+
+```bash
+curl "https://verity-api-243195959173.us-central1.run.app/v1/recalls/search?q=Bistro%20Pro%20Electric%20Grill"
+```
+
+
 Verity answers the questions an agent cannot safely answer itself:
 
 - *Is this product, brand, or model number subject to a recall?*
