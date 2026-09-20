@@ -86,11 +86,12 @@ Listed because an unstated gap is worse than a stated one.
    (`list_tools` + `call_tool` against the built server); there is no automated
    MCP test suite, and the deployed HTTP MCP endpoint is verified by a single
    manual `initialize` probe.
-5. **The refresh job has no automated test.** It was verified manually end to end
-   (execution `verity-refresh-mtnbb`, status `True`, producing new revisions on
-   both services), but nothing asserts it keeps working. A silent failure would
-   leave the corpus stale with no alert. Recommended next step: a freshness check
-   that fails if the corpus is older than N hours.
+5. **The refresh job has no unit test**, but it now has a scheduled end-to-end
+   check: `.github/workflows/health.yml` runs daily at 09:00 UTC and asserts the
+   service is up, that `/stats` freshness is under 36 hours, and that a known
+   recall is still retrievable. A silently failing refresh therefore surfaces as
+   a failed workflow run. What is still untested is the *job definition itself* —
+   nothing asserts that the Cloud Run Job and Scheduler remain configured.
 6. **No CI.** Tests are run manually; nothing prevents a regression from being
    committed.
 7. **No coverage measurement.** Line/branch coverage has not been instrumented,

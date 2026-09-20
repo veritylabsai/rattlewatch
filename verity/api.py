@@ -179,11 +179,34 @@ def health() -> dict[str, Any]:
 
 @app.get("/stats")
 def stats(request: Request) -> dict[str, Any]:
-    """Public counts only. Detailed operational state requires an API key."""
+    """Public counts plus a freshness signal. Detailed operational state is not
+    exposed."""
     _rate_limit(_client_key(request))
-    public = _engine().store.stats()
-    # Expose only non-sensitive, already-public-by-inspection counts.
-    return {"facts": public["facts"], "recalls": public["recalls"]}
+    store = _engine().store
+    public = store.stats()
+    built_at = store.corpus_built_at()
+
+    age_hours: float | None = None
+    if built_at:
+        try:
+            from datetime import datetime, timezone
+
+            age_hours = round(
+                (datetime.now(timezone.utc) - datetime.fromisoformat(built_at)).total_seconds()
+                / 3600.0,
+                1,
+            )
+        except ValueError:
+            age_hours = None
+
+    return {
+        "facts": public["facts"],
+        "recalls": public["recalls"],
+        # Freshness is deliberately public: a stale corpus should be visible to
+        # anyone relying on the data, not hidden.
+        "corpus_built_at": built_at,
+        "data_age_hours": age_hours,
+    }
 
 
 @app.get("/v1/recalls/search")

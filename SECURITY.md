@@ -111,9 +111,12 @@ Stated plainly so nobody assumes a guarantee that does not exist.
 6. **Data freshness is daily, not continuous.** A Cloud Run Job rebuilds the
    image (re-ingesting the live CPSC feed) and redeploys both services, triggered
    by Cloud Scheduler at **06:00 UTC daily**. The corpus can therefore be up to
-   ~24 hours stale. Success is observable via
-   `gcloud run jobs executions list --job=verity-refresh`. There is no alert if a
-   scheduled run fails, so a silent failure would leave the corpus stale.
+   ~24 hours stale. Freshness is **publicly visible** via `/stats`
+   (`corpus_built_at`, `data_age_hours`) — deliberately, because a stale
+   "current ground truth" service should be detectable by anyone relying on it.
+   A scheduled check (`.github/workflows/health.yml`, 09:00 UTC) fails if the
+   corpus exceeds 36 hours, so a silent refresh failure surfaces as a failed
+   workflow run rather than going unnoticed.
 7. **`/docs` (OpenAPI) is public.** Intentional for an agent-facing API.
 8. **No security review has been performed by a third party.** These are the
    author's own controls and tests.

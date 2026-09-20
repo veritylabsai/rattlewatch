@@ -283,6 +283,18 @@ class Store:
         ).fetchone()
         return (int(row["n"]), int(row["m"]))
 
+    def corpus_built_at(self) -> str | None:
+        """When the corpus was last ingested -- i.e. when the image was built.
+
+        This is the freshness signal. A "current ground truth" service that has
+        silently stopped refreshing is worse than one that says it is stale, so
+        this is exposed publicly and asserted by a scheduled health check.
+        """
+        row = self._conn.execute(
+            "SELECT MAX(ingested_at) AS t FROM recalls"
+        ).fetchone()
+        return row["t"] if row and row["t"] else None
+
     # ---- events ------------------------------------------------------------
 
     def add_event(

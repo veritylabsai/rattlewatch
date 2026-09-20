@@ -59,9 +59,12 @@ def test_health_does_not_leak_internals():
     assert body == {"status": "ok"}, body
 
 
-def test_stats_does_not_leak_internals():
+def test_stats_exposes_freshness_but_not_internals():
     body = _get("/stats").json()
-    assert set(body) == {"facts", "recalls"}, body
+    # Freshness is intentionally public; internal operational detail is not.
+    assert set(body) == {"facts", "recalls", "corpus_built_at", "data_age_hours"}, body
+    assert "changes" not in body and "sources" not in body and "events" not in body
+    assert body["data_age_hours"] is None or body["data_age_hours"] >= 0
 
 
 def test_error_response_has_no_stack_trace():

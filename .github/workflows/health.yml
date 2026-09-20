@@ -1,0 +1,60 @@
+name: Health
+
+# Purpose: catch a SILENTLY failing refresh.
+#
+# The daily refresh (Cloud Scheduler -> Cloud Run Job) rebuilds the corpus and
+# redeploys. If it starts failing, /stats keeps serving fine but the data goes
+# stale -- which is worse than an outage, because nothing looks broken.
+#
+# This runs 3 hours after the 06:00 UTC refresh, so a failure means the refresh
+# did not complete. A failed scheduled workflow notifies the repo owner.
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    name: Corpus freshness
+    runs-on: ubuntu-latest
+    env:
+      BASE: https://verity-api-243195959173.us-central1.run.app
+      MAX_AGE_HOURS: "36" # daily refresh + generous slack for one missed run
+    steps:
+      - name: Service is up
+        run: |
+          set -euo pipefail
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$BASE/health")
+          echo "health -> $code"
+          test "$code" = "200" || { echo "service unhealthy"; exit 1; }
+
+      - name: Corpus is fresh
+        run: |
+          set -euo pipefail
+          stats=$(curl -sf --max-time 60 "$BASE/stats")
+          echo "$stats"
+          echo "$stats" | python3 -c "
+          import json, sys, os
+          d = json.load(sys.stdin)
+          age = d.get('data_age_hours')
+          built = d.get('corpus_built_at')
+          limit = float(os.environ['MAX_AGE_HOURS'])
+          print(f'corpus_built_at={built}  data_age_hours={age}  limit={limit}')
+          if age is None:
+              sys.exit('FAIL: /stats reported no data_age_hours')
+          if float(age) > limit:
+              sys.exit(f'STALE: corpus is {age}h old (> {limit}h) - the scheduled refresh is failing')
+          print(f'OK: corpus is {age}h old')
+          "
+
+      - name: Ground truth still answers
+        run: |
+          set -euo pipefail
+          n=$(curl -sf --max-time 60 "$BASE/v1/recalls/search?q=Bistro%20Pro%20Electric%20Grill&limit=1" \
+              | python3 -c "import json,sys; print(json.load(sys.stdin)['count'])")
+          echo "search count=$n"
+          test "$n" -ge 1 || { echo "known recall no longer found"; exit 1; }
