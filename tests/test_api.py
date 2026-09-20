@@ -24,6 +24,24 @@ DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
 _counter = {"n": 0}
 
 
+_CLIENT: TestClient | None = None
+
+
+def _client() -> TestClient:
+    """One client for the whole suite.
+
+    The MCP session manager can only be run once per process, so the app's
+    lifespan must be entered exactly once. A fresh TestClient per request would
+    try to start it repeatedly and fail with "Task group is not initialized" /
+    ".run() can only be called once".
+    """
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = TestClient(app)
+        _CLIENT.__enter__()
+    return _CLIENT
+
+
 def _hdr() -> dict[str, str]:
     """Unique source address per call so rate-limit state cannot leak between tests."""
     _counter["n"] += 1
@@ -31,13 +49,11 @@ def _hdr() -> dict[str, str]:
 
 
 def _get(url: str, **kw):
-    with TestClient(app) as c:
-        return c.get(url, headers=_hdr(), **kw)
+    return _client().get(url, headers=_hdr(), **kw)
 
 
 def _post(url: str, **kw):
-    with TestClient(app) as c:
-        return c.post(url, headers=_hdr(), **kw)
+    return _client().post(url, headers=_hdr(), **kw)
 
 
 # ---- headers / information disclosure --------------------------------------
@@ -133,7 +149,7 @@ def test_premium_rejects_invalid_key():
     try:
         r = _get("/v1/premium/export")
         assert r.status_code == 402, "no key supplied falls through to payment"
-        r2 = TestClient(app).get(
+        r2 = _client().get(
             "/v1/premium/export", headers={"x-api-key": "wrong", "x-forwarded-for": "10.9.9.9"}
         )
         assert r2.status_code == 402, "wrong key must not authorise"
@@ -148,7 +164,7 @@ def test_premium_accepts_valid_key():
     saved = os.environ.get("VERITY_API_KEYS")
     os.environ["VERITY_API_KEYS"] = "test-key-abc123"
     try:
-        r = TestClient(app).get(
+        r = _client().get(
             "/v1/premium/export",
             headers={"x-api-key": "test-key-abc123", "x-forwarded-for": "10.9.9.10"},
         )
@@ -168,11 +184,44 @@ def test_rate_limit_eventually_returns_429():
 
     limit = api_mod._RATE_MAX
     statuses = set()
-    with TestClient(app) as c:
-        for _ in range(limit + 3):
-            r = c.get("/v1/recalls/search", params={"q": "grill"}, headers={"x-forwarded-for": "10.7.7.7"})
-            statuses.add(r.status_code)
+    c = _client()
+    for _ in range(limit + 3):
+        r = c.get(
+            "/v1/recalls/search", params={"q": "grill"}, headers={"x-forwarded-for": "10.7.7.7"}
+        )
+        statuses.add(r.status_code)
     assert 429 in statuses, f"rate limit never triggered over {limit + 3} requests: {statuses}"
+
+
+# ---- MCP served from the same container -----------------------------------
+
+
+def test_mcp_initialize_works_from_the_same_app():
+    """The image default command must be a complete MCP server, because
+    registries (e.g. Glama) introspect it."""
+    r = _client().post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "test", "version": "1"},
+            },
+        },
+        headers=_hdr(),
+        follow_redirects=False,
+    )
+    assert r.status_code == 200, f"expected 200, got {r.status_code} (a redirect would break clients)"
+    assert "verity" in r.text, r.text[:200]
+
+
+def test_mcp_path_does_not_redirect():
+    """A 307 on POST is a hazard: some MCP clients do not replay the body."""
+    r = _client().post("/mcp", json={}, headers=_hdr(), follow_redirects=False)
+    assert r.status_code != 307, "POST /mcp must not redirect"
 
 
 # ---- correctness preserved -------------------------------------------------

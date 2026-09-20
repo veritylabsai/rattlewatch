@@ -21,15 +21,18 @@ import hmac
 import os
 import time
 from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, Field
 
 from .engine import MAX_QUERY_CHARS, Engine
+from .mcp_server import mcp as verity_mcp
 from .store import Store
 
 DEFAULT_DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
@@ -49,6 +52,49 @@ _MAX_BODY_BYTES = _env_int("VERITY_MAX_BODY_BYTES", 4096)
 
 APP_VERSION = "0.1.0"
 
+
+def _allowed_hosts() -> list[str]:
+    """Hosts permitted by MCP's DNS-rebinding protection.
+
+    Protection stays ENABLED; we allowlist rather than disable. Override with
+    VERITY_ALLOWED_HOSTS (comma-separated) when the deployment host changes.
+    """
+    raw = os.environ.get("VERITY_ALLOWED_HOSTS", "").strip()
+    hosts = [h.strip() for h in raw.split(",") if h.strip()]
+    if hosts:
+        return hosts
+    return [
+        "localhost",
+        "localhost:*",
+        "127.0.0.1",
+        "127.0.0.1:*",
+        "testserver",  # FastAPI TestClient
+        "verity-api-243195959173.us-central1.run.app",
+        "verity-mcp-243195959173.us-central1.run.app",
+    ]
+
+
+# One process serves both surfaces: the REST API and MCP over streamable HTTP.
+# MCP is mounted at /mcp, so a single container is a complete MCP server --
+# which matters because registries introspect the image's default command.
+_mcp_app = verity_mcp.streamable_http_app(
+    streamable_http_path="/",
+    transport_security=TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=_allowed_hosts(),
+    ),
+)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # Starlette does not run a mounted sub-app's lifespan, so the MCP session
+    # manager's task group is started explicitly here. Without this, MCP calls
+    # fail with "Task group is not initialized".
+    async with _mcp_app.router.lifespan_context(_mcp_app):
+        yield
+
+
 app = FastAPI(
     title="Verity",
     description=(
@@ -59,7 +105,10 @@ app = FastAPI(
     version=APP_VERSION,
     docs_url="/docs",
     redoc_url=None,
+    lifespan=_lifespan,
 )
+
+app.mount("/mcp", _mcp_app)
 
 
 def _cors_origins() -> list[str]:
@@ -78,6 +127,19 @@ if _origins:
         allow_headers=["content-type", "x-api-key"],
         max_age=600,
     )
+
+
+@app.middleware("http")
+async def _mcp_normalize_path(request: Request, call_next):
+    """Serve /mcp directly instead of redirecting to /mcp/.
+
+    Mounting a sub-app makes Starlette redirect "/mcp" -> "/mcp/". A 307 on POST
+    is a real hazard for MCP clients (some do not replay the body), so the path
+    is normalised before routing rather than redirecting.
+    """
+    if request.scope.get("path") == "/mcp":
+        request.scope["path"] = "/mcp/"
+    return await call_next(request)
 
 
 @app.middleware("http")
