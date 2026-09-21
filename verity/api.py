@@ -31,7 +31,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, Field
 
-from . import discovery
+from . import __version__, discovery
 from .engine import MAX_QUERY_CHARS, Engine
 from .mcp_server import mcp as verity_mcp
 from .store import Store
@@ -51,7 +51,7 @@ _RATE_WINDOW = float(_env_int("VERITY_RATE_WINDOW_SECONDS", 60))
 _RATE_MAX = _env_int("VERITY_RATE_MAX_REQUESTS", 60)
 _MAX_BODY_BYTES = _env_int("VERITY_MAX_BODY_BYTES", 4096)
 
-APP_VERSION = "0.1.0"
+APP_VERSION = __version__
 
 
 def _allowed_hosts() -> list[str]:

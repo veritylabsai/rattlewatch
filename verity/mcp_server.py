@@ -15,6 +15,7 @@ from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 
+from . import __version__
 from .engine import Engine
 from .store import Store
 
@@ -29,7 +30,7 @@ mcp = MCPServer(
         "Returns only records that exist in the store, each pinned to an "
         "official source. Never generates an answer."
     ),
-    version="0.1.0",
+    version=__version__,
 )
 
 

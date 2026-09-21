@@ -279,6 +279,42 @@ def test_robots_txt_welcomes_crawlers():
     assert "Allow: /" in r.text
 
 
+def test_version_is_single_sourced():
+    """The version drifted silently before; assert it cannot again.
+
+    `verity/__init__.py` is the single source of truth. The served server card
+    and the registry manifest must both agree with it.
+    """
+    import json
+    from pathlib import Path as _P
+
+    import verity
+
+    root = _P(__file__).resolve().parent.parent
+
+    assert _get("/.well-known/mcp/server.json").json()["version"] == verity.__version__
+
+    manifest = json.loads((root / "server.json").read_text("utf-8"))
+    assert manifest["version"] == verity.__version__, "server.json is out of sync with __version__"
+
+    # The MCP handshake advertises the same version.
+    r = _client().post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18",
+                "capabilities": {},
+                "clientInfo": {"name": "vtest", "version": "1"},
+            },
+        },
+        headers=_hdr(),
+    )
+    assert verity.__version__ in r.text, "the MCP handshake advertises a stale version"
+
+
 # ---- correctness preserved -------------------------------------------------
 
 

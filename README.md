@@ -173,8 +173,8 @@ unprivileged user (UID 10001).
 
 ```bash
 export PYTHONPATH=.
-python tests/test_engine.py   # 11 checks — correctness + non-hallucination
-python tests/test_api.py      # 18 checks — security + abuse
+python tests/test_engine.py   # 13 checks — correctness + non-hallucination
+python tests/test_api.py      # 27 checks — security + abuse
 ```
 
 See **[TESTING.md](TESTING.md)** for the coverage map and an explicit list of

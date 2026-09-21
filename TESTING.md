@@ -4,8 +4,8 @@
 
 ```bash
 export PYTHONPATH=.
-python tests/test_engine.py      # correctness + non-hallucination  (11 checks)
-python tests/test_api.py         # security + abuse                (18 checks)
+python tests/test_engine.py      # correctness + non-hallucination  (13 checks)
+python tests/test_api.py         # security + abuse                (27 checks)
 ```
 
 Each suite is self-running (no pytest required) and exits non-zero on failure.
@@ -33,6 +33,8 @@ nothing is invented.**
 | `test_verify_never_hallucinates` | **Returns an explicit negative for an unrelated query** |
 | `test_verify_returns_relevant_fact_for_compliance_query` | Positive fact path |
 | `test_change_feed_is_populated` | Change feed returns sourced events |
+| `test_fda_records_map_and_are_searchable` | openFDA records land in the same store, are namespaced per source, and are findable (hermetic — synthetic record) |
+| `test_fda_record_missing_recall_number_is_skipped` | A record with no ID is skipped rather than corrupting the store |
 
 The two most important are `test_verify_never_hallucinates` and
 `test_every_fact_has_citation`. They encode the reason the product exists.
@@ -48,6 +50,8 @@ The two most important are `test_verify_never_hallucinates` and
 | Rate limiting | 429 is actually reached under sustained requests |
 | Correctness preserved | Public search still works; verify returns an explicit negative; every result carries a source |
 | Performance / DoS | Corpus is cached; 20 searches complete well under a threshold that a per-request rebuild could not meet |
+| Machine-readable discovery | `/llms.txt`, the MCP server card (both filenames), the Glama ownership claim, and `robots.txt` are served; the repo-root and served Glama claims cannot drift apart |
+| MCP surface | `initialize` succeeds from the same app, and `/mcp` does not 307-redirect (some clients do not replay the body) |
 
 ## 3. Measured performance
 
@@ -77,39 +81,47 @@ print((time.perf_counter() - t) / 20)
 
 Listed because an unstated gap is worse than a stated one.
 
-1. **No automated tests for the container.** The Dockerfile's non-root user,
-   build step, and image contents are reviewed by eye, not asserted.
-2. **No load, soak, or concurrency testing.** Rate-limit behaviour under
+1. **No load, soak, or concurrency testing.** Rate-limit behaviour under
    simultaneous clients, and SQLite behaviour under concurrent reads, are untested.
-3. **No fuzzing.** Input handling is tested with hand-written cases only.
-4. **The MCP layer is only lightly covered.** Tools were exercised manually
-   (`list_tools` + `call_tool` against the built server); there is no automated
-   MCP test suite, and the deployed HTTP MCP endpoint is verified by a single
-   manual `initialize` probe.
-5. **The refresh job has no unit test**, but it now has a scheduled end-to-end
-   check: `.github/workflows/health.yml` runs daily at 09:00 UTC and asserts the
-   service is up, that `/stats` freshness is under 36 hours, and that a known
-   recall is still retrievable. A silently failing refresh therefore surfaces as
-   a failed workflow run. What is still untested is the *job definition itself* —
-   nothing asserts that the Cloud Run Job and Scheduler remain configured.
-6. **No CI.** Tests are run manually; nothing prevents a regression from being
-   committed.
-7. **No coverage measurement.** Line/branch coverage has not been instrumented,
-   so "18 checks pass" says nothing about the proportion of code exercised.
-8. **No third-party security review or penetration test.**
-9. **Deployment-level controls are unverified**: Cloud Run IAM, instance caps, and
+2. **No fuzzing.** Input handling is tested with hand-written cases only.
+3. **No coverage measurement.** Line/branch coverage has not been instrumented,
+   so "39 checks pass" says nothing about the proportion of code exercised.
+4. **No third-party security review or penetration test.**
+5. **Deployment-level controls are unverified**: Cloud Run IAM, instance caps, and
    the absence of public buckets were configured and reviewed manually.
+6. **The refresh job's *definition* is unasserted.** The job has a scheduled
+   end-to-end check whose behaviour is verified, but nothing tests that the Cloud
+   Run Job and Cloud Scheduler remain correctly configured. A silent
+   misconfiguration would leave the corpus stale until the health check caught it
+   up to 36 hours later.
+7. **No lockfile or SBOM.** Dependencies are pinned by minimum version only.
+8. **The MCP protocol surface is tested through the app, not as a real client.**
+   `initialize` and the no-redirect behaviour are asserted (and were verified
+   manually against the live endpoint with a full
+   `initialize → initialized → tools/list` handshake), but no automated test
+   performs the handshake as a genuine MCP client would.
 
-## 5. If you want this hardened further
+## 5. What is already covered
+
+Stated explicitly so the list above is not read as a description of the whole
+system. On every push, CI (`.github/workflows/ci.yml`) runs:
+
+1. **Both suites** against a hermetic fixture (no network) — closes the old
+   "no CI" gap.
+2. **A container-hardening job** that builds the image, asserts the container
+   **does not run as root**, smoke-tests `/health`, and asserts the security
+   headers are actually served — closes the old "container is reviewed by eye" gap.
+3. **A scheduled health check** (`.github/workflows/health.yml`) that fails if the
+   corpus exceeds 36 hours, so a stalled refresh cannot go unnoticed.
+
+## 6. If you want this hardened further
 
 In rough priority order:
 
-1. Add CI (GitHub Actions) running both suites on every push — closes gap 6.
-2. Add `coverage.py` and a floor threshold — closes gap 7.
-3. Replace per-instance rate limiting with a shared counter (Redis/Firestore) so
+1. Add `coverage.py` and a floor threshold — closes gap 3.
+2. Replace per-instance rate limiting with a shared counter (Redis/Firestore) so
    the limit is global — fixes the limitation in `SECURITY.md` §5.2.
-4. Move API keys into Secret Manager — closes `SECURITY.md` §5.4.
-5. Add a container test (assert UID != 0, assert no shell) — closes gap 1.
-6. Fix the refresh job or replace it with a Cloud Build trigger — closes gap 5,
-   and is the largest correctness gap since the corpus is currently a snapshot.
-7. Add a lockfile and SBOM; pin dependency hashes — closes `SECURITY.md` §5.5.
+3. Move API keys into Secret Manager — closes `SECURITY.md` §5.4.
+4. Assert the refresh Job and Scheduler configuration — closes gap 6.
+5. Add a lockfile and SBOM; pin dependency hashes — closes gap 7.
+6. Add an automated MCP client handshake test — closes gap 8.

@@ -8,4 +8,4 @@ exist in the store, each pinned to an official source and a verification date.
 One hard rule is encoded here: an answer without a citation does not exist.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

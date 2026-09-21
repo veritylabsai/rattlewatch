@@ -13,6 +13,8 @@ service actually does. Keep the wording honest: describe only what is real.
 
 from __future__ import annotations
 
+from . import __version__
+
 MCP_URL = "https://verity-mcp-243195959173.us-central1.run.app/mcp"
 API_URL = "https://verity-api-243195959173.us-central1.run.app"
 REPO_URL = "https://github.com/veritylabsai/verity"
@@ -101,7 +103,7 @@ def server_card() -> dict:
         "name": "verity",
         "title": "Verity",
         "description": SHORT_DESCRIPTION,
-        "version": "0.1.0",
+        "version": __version__,
         "homepage": REPO_URL,
         "repository": {"url": REPO_URL, "source": "github"},
         "license": "MIT",

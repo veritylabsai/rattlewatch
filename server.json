@@ -3,7 +3,7 @@
   "name": "io.github.veritylabsai/verity",
   "title": "Verity",
   "description": "Cited product-compliance ground truth for AI agents. Never generates; always cites.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "websiteUrl": "https://github.com/veritylabsai/verity",
   "repository": {
     "url": "https://github.com/veritylabsai/verity",
