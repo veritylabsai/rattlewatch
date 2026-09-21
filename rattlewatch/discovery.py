@@ -19,9 +19,11 @@ MCP_URL = "https://rattlewatch.rattled.ca/mcp"
 API_URL = "https://rattlewatch.rattled.ca"
 REPO_URL = "https://github.com/veritylabsai/rattlewatch"
 
+# Kept under 100 characters because the official MCP registry rejects a longer
+# `description`, and one string used everywhere means the listing and the served
+# discovery docs cannot drift apart.
 SHORT_DESCRIPTION = (
-    "US product recall lookup for AI agents: CPSC consumer products and FDA food, "
-    "drug and device enforcement. Every result is cited; nothing is invented."
+    "Cited US recall lookup for AI agents: CPSC and FDA data, nothing invented."
 )
 
 LLMS_TXT = f"""# Rattlewatch
