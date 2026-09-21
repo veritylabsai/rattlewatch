@@ -1,4 +1,4 @@
-"""Security and abuse tests for the Verity API.
+"""Security and abuse tests for the Rattlewatch API.
 
 These assert the properties SECURITY.md claims. If a claim in that document is
 not backed by a test here, treat the claim as unverified.
@@ -15,11 +15,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from verity.api import app  # noqa: E402
-from verity.engine import MAX_QUERY_CHARS, Engine, _CORPUS_CACHE  # noqa: E402
-from verity.store import Store  # noqa: E402
+from rattlewatch.api import app  # noqa: E402
+from rattlewatch.engine import MAX_QUERY_CHARS, Engine, _CORPUS_CACHE  # noqa: E402
+from rattlewatch.store import Store  # noqa: E402
 
-DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
+DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlewatch.sqlite3"))
 
 _counter = {"n": 0}
 
@@ -87,7 +87,7 @@ def test_error_response_has_no_stack_trace():
     r = _post("/v1/verify", json={"query": "x" * (MAX_QUERY_CHARS + 1)})
     assert r.status_code == 422
     text = r.text.lower()
-    for leak in ("traceback", "site-packages", "verity/", 'file "'):
+    for leak in ("traceback", "site-packages", "rattlewatch/", 'file "'):
         assert leak not in text, f"leaked {leak!r}"
 
 
@@ -134,18 +134,18 @@ def test_oversized_body_is_rejected():
 
 
 def test_premium_fails_closed_when_no_keys_configured(monkeypatch=None):
-    saved = os.environ.pop("VERITY_API_KEYS", None)
+    saved = os.environ.pop("RATTLEWATCH_API_KEYS", None)
     try:
         r = _get("/v1/premium/export")
         assert r.status_code == 402, r.status_code  # no key configured -> payment path
     finally:
         if saved is not None:
-            os.environ["VERITY_API_KEYS"] = saved
+            os.environ["RATTLEWATCH_API_KEYS"] = saved
 
 
 def test_premium_rejects_invalid_key():
-    saved = os.environ.get("VERITY_API_KEYS")
-    os.environ["VERITY_API_KEYS"] = "test-key-abc123"
+    saved = os.environ.get("RATTLEWATCH_API_KEYS")
+    os.environ["RATTLEWATCH_API_KEYS"] = "test-key-abc123"
     try:
         r = _get("/v1/premium/export")
         assert r.status_code == 402, "no key supplied falls through to payment"
@@ -155,14 +155,14 @@ def test_premium_rejects_invalid_key():
         assert r2.status_code == 402, "wrong key must not authorise"
     finally:
         if saved is None:
-            os.environ.pop("VERITY_API_KEYS", None)
+            os.environ.pop("RATTLEWATCH_API_KEYS", None)
         else:
-            os.environ["VERITY_API_KEYS"] = saved
+            os.environ["RATTLEWATCH_API_KEYS"] = saved
 
 
 def test_premium_accepts_valid_key():
-    saved = os.environ.get("VERITY_API_KEYS")
-    os.environ["VERITY_API_KEYS"] = "test-key-abc123"
+    saved = os.environ.get("RATTLEWATCH_API_KEYS")
+    os.environ["RATTLEWATCH_API_KEYS"] = "test-key-abc123"
     try:
         r = _client().get(
             "/v1/premium/export",
@@ -171,16 +171,16 @@ def test_premium_accepts_valid_key():
         assert r.status_code == 200, r.text
     finally:
         if saved is None:
-            os.environ.pop("VERITY_API_KEYS", None)
+            os.environ.pop("RATTLEWATCH_API_KEYS", None)
         else:
-            os.environ["VERITY_API_KEYS"] = saved
+            os.environ["RATTLEWATCH_API_KEYS"] = saved
 
 
 # ---- rate limiting ---------------------------------------------------------
 
 
 def test_rate_limit_eventually_returns_429():
-    from verity import api as api_mod
+    from rattlewatch import api as api_mod
 
     limit = api_mod._RATE_MAX
     statuses = set()
@@ -215,7 +215,7 @@ def test_mcp_initialize_works_from_the_same_app():
         follow_redirects=False,
     )
     assert r.status_code == 200, f"expected 200, got {r.status_code} (a redirect would break clients)"
-    assert "verity" in r.text, r.text[:200]
+    assert "rattlewatch" in r.text, r.text[:200]
 
 
 def test_mcp_path_does_not_redirect():
@@ -242,7 +242,7 @@ def test_mcp_server_card_is_served():
     r = _get("/.well-known/mcp/server.json")
     assert r.status_code == 200
     card = r.json()
-    assert card["name"] == "verity"
+    assert card["name"] == "rattlewatch"
     assert any(t["type"] == "streamable-http" for t in card["transports"])
     assert len(card["tools"]) == 4
 
@@ -281,14 +281,14 @@ def test_robots_txt_welcomes_crawlers():
 
 def test_a2a_agent_card_is_served_at_both_paths():
     """Crawlers probe both the current and legacy A2A paths."""
-    import verity
+    import rattlewatch
 
     for path in ("/.well-known/agent-card.json", "/.well-known/agent.json"):
         r = _get(path)
         assert r.status_code == 200, f"{path} must not 404"
         card = r.json()
-        assert card["name"] == "verity"
-        assert card["version"] == verity.__version__
+        assert card["name"] == "rattlewatch"
+        assert card["version"] == rattlewatch.__version__
         assert len(card["skills"]) == 4, "the card must describe the real tools"
 
 
@@ -300,10 +300,10 @@ def test_sitemap_is_served():
 
 def test_all_tools_declare_read_only():
     """Registries classify tools by side effect; unannotated tools end up
-    unclassified. Every Verity tool only reads, so it must say so."""
+    unclassified. Every Rattlewatch tool only reads, so it must say so."""
     import asyncio
 
-    from verity.mcp_server import mcp
+    from rattlewatch.mcp_server import mcp
 
     tools = asyncio.run(mcp.list_tools())
     assert len(tools) == 4, [t.name for t in tools]
@@ -316,20 +316,20 @@ def test_all_tools_declare_read_only():
 def test_version_is_single_sourced():
     """The version drifted silently before; assert it cannot again.
 
-    `verity/__init__.py` is the single source of truth. The served server card
+    `rattlewatch/__init__.py` is the single source of truth. The served server card
     and the registry manifest must both agree with it.
     """
     import json
     from pathlib import Path as _P
 
-    import verity
+    import rattlewatch
 
     root = _P(__file__).resolve().parent.parent
 
-    assert _get("/.well-known/mcp/server.json").json()["version"] == verity.__version__
+    assert _get("/.well-known/mcp/server.json").json()["version"] == rattlewatch.__version__
 
     manifest = json.loads((root / "server.json").read_text("utf-8"))
-    assert manifest["version"] == verity.__version__, "server.json is out of sync with __version__"
+    assert manifest["version"] == rattlewatch.__version__, "server.json is out of sync with __version__"
 
     # The MCP handshake advertises the same version.
     r = _client().post(
@@ -346,7 +346,7 @@ def test_version_is_single_sourced():
         },
         headers=_hdr(),
     )
-    assert verity.__version__ in r.text, "the MCP handshake advertises a stale version"
+    assert rattlewatch.__version__ in r.text, "the MCP handshake advertises a stale version"
 
 
 # ---- correctness preserved -------------------------------------------------

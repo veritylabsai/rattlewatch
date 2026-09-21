@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.veritylabsai/verity",
-  "title": "Verity",
+  "name": "io.github.veritylabsai/rattlewatch",
+  "title": "Rattlewatch",
   "description": "Cited product-compliance ground truth for AI agents. Never generates; always cites.",
   "version": "0.2.0",
-  "websiteUrl": "https://github.com/veritylabsai/verity",
+  "websiteUrl": "https://github.com/veritylabsai/rattlewatch",
   "repository": {
-    "url": "https://github.com/veritylabsai/verity",
+    "url": "https://github.com/veritylabsai/rattlewatch",
     "source": "github"
   },
   "remotes": [

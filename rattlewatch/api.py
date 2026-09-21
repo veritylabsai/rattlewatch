@@ -1,4 +1,4 @@
-"""Verity REST API.
+"""Rattlewatch REST API.
 
 Security posture (see SECURITY.md for the full threat model):
 
@@ -33,10 +33,10 @@ from pydantic import BaseModel, Field
 
 from . import __version__, discovery
 from .engine import MAX_QUERY_CHARS, Engine
-from .mcp_server import mcp as verity_mcp
+from .mcp_server import mcp as rattlewatch_mcp
 from .store import Store
 
-DEFAULT_DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
+DEFAULT_DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlewatch.sqlite3"))
 
 
 def _env_int(name: str, default: int) -> int:
@@ -47,9 +47,9 @@ def _env_int(name: str, default: int) -> int:
 
 
 # Public tier: coarse per-instance guard (see SECURITY.md limitation).
-_RATE_WINDOW = float(_env_int("VERITY_RATE_WINDOW_SECONDS", 60))
-_RATE_MAX = _env_int("VERITY_RATE_MAX_REQUESTS", 60)
-_MAX_BODY_BYTES = _env_int("VERITY_MAX_BODY_BYTES", 4096)
+_RATE_WINDOW = float(_env_int("RATTLEWATCH_RATE_WINDOW_SECONDS", 60))
+_RATE_MAX = _env_int("RATTLEWATCH_RATE_MAX_REQUESTS", 60)
+_MAX_BODY_BYTES = _env_int("RATTLEWATCH_MAX_BODY_BYTES", 4096)
 
 APP_VERSION = __version__
 
@@ -58,9 +58,9 @@ def _allowed_hosts() -> list[str]:
     """Hosts permitted by MCP's DNS-rebinding protection.
 
     Protection stays ENABLED; we allowlist rather than disable. Override with
-    VERITY_ALLOWED_HOSTS (comma-separated) when the deployment host changes.
+    RATTLEWATCH_ALLOWED_HOSTS (comma-separated) when the deployment host changes.
     """
-    raw = os.environ.get("VERITY_ALLOWED_HOSTS", "").strip()
+    raw = os.environ.get("RATTLEWATCH_ALLOWED_HOSTS", "").strip()
     hosts = [h.strip() for h in raw.split(",") if h.strip()]
     if hosts:
         return hosts
@@ -78,7 +78,7 @@ def _allowed_hosts() -> list[str]:
 # One process serves both surfaces: the REST API and MCP over streamable HTTP.
 # MCP is mounted at /mcp, so a single container is a complete MCP server --
 # which matters because registries introspect the image's default command.
-_mcp_app = verity_mcp.streamable_http_app(
+_mcp_app = rattlewatch_mcp.streamable_http_app(
     streamable_http_path="/",
     transport_security=TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
@@ -97,7 +97,7 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Verity",
+    title="Rattlewatch",
     description=(
         "Cited, current, versioned ground truth for cross-border product "
         "compliance. Every answer carries an official source and a "
@@ -113,7 +113,7 @@ app.mount("/mcp", _mcp_app)
 
 
 def _cors_origins() -> list[str]:
-    raw = os.environ.get("VERITY_CORS_ORIGINS", "").strip()
+    raw = os.environ.get("RATTLEWATCH_CORS_ORIGINS", "").strip()
     if not raw:
         return []  # deny by default
     return [o.strip() for o in raw.split(",") if o.strip()]
@@ -192,7 +192,7 @@ def _client_key(request: Request) -> str:
 
 # ---- api keys --------------------------------------------------------------
 def _configured_keys() -> list[str]:
-    raw = os.environ.get("VERITY_API_KEYS", "").strip()
+    raw = os.environ.get("RATTLEWATCH_API_KEYS", "").strip()
     return [k.strip() for k in raw.split(",") if k.strip()]
 
 
@@ -218,7 +218,7 @@ def _engine() -> Engine:
 @app.get("/")
 def root() -> dict[str, Any]:
     return {
-        "name": "Verity",
+        "name": "Rattlewatch",
         "tagline": "verified ground truth for AI agents",
         "version": APP_VERSION,
         "docs": "/docs",
@@ -296,7 +296,7 @@ def mcp_server_card() -> dict[str, Any]:
 
 @app.get("/.well-known/mcp/server-card.json", include_in_schema=False)
 def mcp_server_card_alt() -> dict[str, Any]:
-    """Alias — different directories probe different filenames."""
+    """Alias â€” different directories probe different filenames."""
     return discovery.server_card()
 
 
@@ -312,7 +312,7 @@ def glama_claim() -> dict[str, Any]:
 
 @app.get("/robots.txt", include_in_schema=False, response_class=PlainTextResponse)
 def robots() -> PlainTextResponse:
-    """Crawlers are welcome — being discovered is the point."""
+    """Crawlers are welcome â€” being discovered is the point."""
     return PlainTextResponse(discovery.ROBOTS_TXT, media_type="text/plain; charset=utf-8")
 
 
@@ -323,7 +323,7 @@ def sitemap() -> PlainTextResponse:
 
 @app.get("/.well-known/agent-card.json", include_in_schema=False)
 def a2a_agent_card() -> dict[str, Any]:
-    """A2A agent card — read by registries that speak Agent-to-Agent."""
+    """A2A agent card â€” read by registries that speak Agent-to-Agent."""
     return discovery.agent_card()
 
 
@@ -346,7 +346,7 @@ def search_recalls(
         "query": q,
         "count": len(results),
         "results": results,
-        "note": "Records are limited to the Verity store; empty means no verified match.",
+        "note": "Records are limited to the Rattlewatch store; empty means no verified match.",
     }
 
 
@@ -439,7 +439,7 @@ def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
         port=port,
         log_level="info",
         # Bound the request body at the server layer too.
-        limit_max_requests=_env_int("VERITY_MAX_REQUESTS_PER_WORKER", 10000),
+        limit_max_requests=_env_int("RATTLEWATCH_MAX_REQUESTS_PER_WORKER", 10000),
         timeout_keep_alive=15,
     )
 

@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONPATH: .
-      VERITY_DB: var/verity.sqlite3
+      RATTLEWATCH_DB: var/rattlewatch.sqlite3
     steps:
       - uses: actions/checkout@v4
 
@@ -32,12 +32,12 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Compile check
-        run: python -m compileall -q verity
+        run: python -m compileall -q rattlewatch
 
       - name: Build ground-truth store from fixture (no network)
-        run: python -m verity build --cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0
+        run: python -m rattlewatch build --cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0
 
-      - name: Engine tests — correctness and non-hallucination
+      - name: Engine tests â€” correctness and non-hallucination
         run: python tests/test_engine.py
 
       - name: Security and abuse tests
@@ -49,27 +49,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build image (hermetic — fixture, not the live feed)
+      - name: Build image (hermetic â€” fixture, not the live feed)
         run: |
           docker build \
-            --build-arg VERITY_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0" \
-            -t verity-ci .
+            --build-arg RATTLEWATCH_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0" \
+            -t rattlewatch-ci .
 
       - name: Assert the container does not run as root
         run: |
-          docker run --rm --entrypoint python verity-ci \
+          docker run --rm --entrypoint python rattlewatch-ci \
             -c "import os,sys; print('uid=', os.getuid()); sys.exit(0 if os.getuid() != 0 else 1)"
 
       - name: Smoke test the API inside the container
         run: |
-          docker run -d --name verity-ci -p 8000:8000 verity-ci
+          docker run -d --name rattlewatch-ci -p 8000:8000 rattlewatch-ci
           ok=0
           for i in $(seq 1 30); do
             if curl -sf http://localhost:8000/health >/dev/null; then ok=1; break; fi
             sleep 2
           done
           echo "--- container logs ---"
-          docker logs verity-ci || true
+          docker logs rattlewatch-ci || true
           echo "--- health ---"
           curl -sf http://localhost:8000/health
           test "$ok" = "1" || { echo "API did not become healthy"; exit 1; }
@@ -83,4 +83,4 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker rm -f verity-ci || true
+        run: docker rm -f rattlewatch-ci || true

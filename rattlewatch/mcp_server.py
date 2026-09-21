@@ -1,11 +1,11 @@
-"""Verity MCP server.
+"""Rattlewatch MCP server.
 
 Exposes the ground-truth store to AI agents through the Model Context Protocol.
 Every tool returns only cited records from the store; none of them generate.
 
 Run modes:
-  * stdio (default, for local agent use):  python -m verity.mcp_server
-  * streamable HTTP (for hosting):          python -m verity.mcp_server --http --port 8000
+  * stdio (default, for local agent use):  python -m rattlewatch.mcp_server
+  * streamable HTTP (for hosting):          python -m rattlewatch.mcp_server --http --port 8000
 """
 
 from __future__ import annotations
@@ -20,11 +20,11 @@ from . import __version__
 from .engine import Engine
 from .store import Store
 
-DEFAULT_DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
+DEFAULT_DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlewatch.sqlite3"))
 
 mcp = MCPServer(
-    name="verity",
-    title="Verity — verified product-safety ground truth",
+    name="rattlewatch",
+    title="Rattlewatch â€” verified product-safety ground truth",
     description=(
         "Cited, current, versioned ground truth for cross-border product "
         "compliance (recalls, certifications, and market requirements). "
@@ -43,7 +43,7 @@ def _engine() -> Engine:
 def _readonly(title: str) -> ToolAnnotations:
     """Annotations for a tool that only reads.
 
-    Accurate rather than decorative: every Verity tool is a read-only lookup over
+    Accurate rather than decorative: every Rattlewatch tool is a read-only lookup over
     a local store. Declaring it lets clients and registries treat the tools as
     safe to call, and registries that classify tools by side-effect will
     otherwise leave them unclassified.
@@ -72,7 +72,7 @@ def search_recalls(query: str, market: str = "US", limit: int = 10) -> dict:
         "query": query,
         "count": len(results),
         "results": results,
-        "note": "Records are limited to the Verity store; empty means no verified match.",
+        "note": "Records are limited to the Rattlewatch store; empty means no verified match.",
     }
 
 
@@ -121,7 +121,7 @@ def verify(query: str) -> dict:
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Run the Verity MCP server.")
+    parser = argparse.ArgumentParser(description="Run the Rattlewatch MCP server.")
     parser.add_argument("--http", action="store_true", help="serve over streamable HTTP")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)

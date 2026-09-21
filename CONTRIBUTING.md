@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for considering a contribution. Verity is MIT-licensed; contributions are
+Thanks for considering a contribution. Rattlewatch is MIT-licensed; contributions are
 welcome under the same terms.
 
 ## The one rule that matters
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 # Build the store. Tests use a bundled fixture so this is not needed for CI,
 # but it is useful locally:
-python -m verity build --cache tests/fixtures/recalls.json --max-recalls 50
+python -m rattlewatch build --cache tests/fixtures/recalls.json --max-recalls 50
 ```
 
 ## Running the tests
@@ -42,7 +42,7 @@ does not run as root and that security headers are served.
 ## Adding data
 
 **More recalls** — feed the CPSC ingest, or add another structured feed to
-`verity/compile.py`. Namespace the `recall_id` per source so IDs cannot collide.
+`rattlewatch/compile.py`. Namespace the `recall_id` per source so IDs cannot collide.
 
 **More cited requirements** — add entries to `data/rules/seed.yaml`. Required
 fields: `key`, `kind`, `market`, `subject`, `question`, `answer`, `citation_url`,

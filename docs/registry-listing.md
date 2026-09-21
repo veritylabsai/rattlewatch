@@ -1,11 +1,11 @@
-# Verity — registry listing copy
+# Rattlewatch — registry listing copy
 
-Use this text when listing Verity in MCP directories (mcp.so, Smithery, Glama,
+Use this text when listing Rattlewatch in MCP directories (mcp.so, Smithery, Glama,
 PulseMCP) and the x402 Bazaar.
 
 ---
 
-**Name:** Verity
+**Name:** Rattlewatch
 
 **Tagline:** Cited, current ground truth for product-safety compliance — for AI agents.
 
@@ -13,12 +13,12 @@ PulseMCP) and the x402 Bazaar.
 
 **Description:**
 
-Verity gives AI agents cited, current, versioned answers to the compliance
+Rattlewatch gives AI agents cited, current, versioned answers to the compliance
 questions that are most expensive to get wrong: *Is this product, brand, or model
 number subject to a recall? What certification does it need to enter a market?
 What changed this week?*
 
-Every answer carries an official source URL and a last-verified date. Verity
+Every answer carries an official source URL and a last-verified date. Rattlewatch
 never generates an answer — it returns records that exist in its store, or it
 reports "no verified record." Absence is an honest negative, not a guess.
 
@@ -41,9 +41,9 @@ reports "no verified record." Absence is an honest negative, not a guess.
 **Run:**
 
 ```bash
-python -m verity mcp        # stdio
-python -m verity serve      # REST API
-python -m verity mcp --http # MCP over HTTP
+python -m rattlewatch mcp        # stdio
+python -m rattlewatch serve      # REST API
+python -m rattlewatch mcp --http # MCP over HTTP
 ```
 
 **Tags:** `mcp`, `compliance`, `product-safety`, `recall`, `regulatory`, `cpsc`,

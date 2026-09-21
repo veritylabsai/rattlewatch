@@ -3,8 +3,8 @@ FROM python:3.13-slim
 
 # Run as an unprivileged user. A compromised process should not be root, and the
 # container never needs to write outside its own data directory.
-RUN groupadd --gid 10001 verity \
- && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin verity
+RUN groupadd --gid 10001 rattlewatch \
+ && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin rattlewatch
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -23,18 +23,18 @@ COPY . .
 #
 # Overridable so CI can build hermetically from the test fixture instead of
 # hitting the live feeds:
-#   docker build --build-arg VERITY_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0" .
+#   docker build --build-arg RATTLEWATCH_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0" .
 #
 # `|| true` keeps the image buildable if an upstream feed is briefly
 # unavailable; the service still starts and serves whatever was baked in.
-ARG VERITY_BUILD_ARGS="--max-recalls 5000 --fda-limit 3000"
-RUN python -m verity build ${VERITY_BUILD_ARGS} || true
+ARG RATTLEWATCH_BUILD_ARGS="--max-recalls 5000 --fda-limit 3000"
+RUN python -m rattlewatch build ${RATTLEWATCH_BUILD_ARGS} || true
 
 # Hand ownership to the unprivileged user, then drop privileges.
-RUN chown -R verity:verity /app
-USER verity
+RUN chown -R rattlewatch:rattlewatch /app
+USER rattlewatch
 
 EXPOSE 8000
 
 # No shell, exec form so the process is PID 1 and receives signals directly.
-CMD ["python", "-m", "verity", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "rattlewatch", "serve", "--host", "0.0.0.0", "--port", "8000"]

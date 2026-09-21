@@ -2,9 +2,9 @@
 
 Two conventions matter for a service whose users are agents:
 
-* ``/llms.txt`` — a plain-text summary an LLM can read to understand the service
+* ``/llms.txt`` â€” a plain-text summary an LLM can read to understand the service
   without scraping HTML.
-* ``/.well-known/mcp/server.json`` (and ``server-card.json``) — the MCP server
+* ``/.well-known/mcp/server.json`` (and ``server-card.json``) â€” the MCP server
   card, so directories and clients can discover the endpoint and its tools.
 
 These are served from the running service, so they cannot drift from what the
@@ -17,17 +17,17 @@ from . import __version__
 
 MCP_URL = "https://verity-mcp-243195959173.us-central1.run.app/mcp"
 API_URL = "https://verity-api-243195959173.us-central1.run.app"
-REPO_URL = "https://github.com/veritylabsai/verity"
+REPO_URL = "https://github.com/veritylabsai/rattlewatch"
 
 SHORT_DESCRIPTION = (
     "Cited product-compliance ground truth for AI agents. Never generates; always cites."
 )
 
-LLMS_TXT = f"""# Verity
+LLMS_TXT = f"""# Rattlewatch
 
 > Cited, current ground truth for cross-border product-safety compliance, for AI agents.
 
-Verity answers the compliance questions that are expensive to get wrong:
+Rattlewatch answers the compliance questions that are expensive to get wrong:
 
 - Is this product, brand, or model number subject to a recall?
 - What certification does a product need to enter a given market?
@@ -50,11 +50,11 @@ version and a change event rather than an in-place edit.
 
 ## Tools
 
-- `search_recalls` — cited CPSC recall records by product name, brand, model, or UPC
-- `get_requirement` — cited requirements for a subject + market (CPSIA/CPC, CPSC
+- `search_recalls` â€” cited CPSC recall records by product name, brand, model, or UPC
+- `get_requirement` â€” cited requirements for a subject + market (CPSIA/CPC, CPSC
   eFiling, EU GPSR, CE marking, REACH SVHCs, RoHS, California Prop 65)
-- `list_changes` — new recalls and rule changes since an ISO-8601 timestamp
-- `verify` — cited records matching a claim, or an explicit negative
+- `list_changes` â€” new recalls and rule changes since an ISO-8601 timestamp
+- `verify` â€” cited records matching a claim, or an explicit negative
 
 ## REST API
 
@@ -64,15 +64,15 @@ version and a change event rather than an in-place edit.
 - `GET /v1/requirements?subject=<subject>&market=<market>`
 - `GET /v1/changes?since=<iso8601>`
 - `POST /v1/verify` with `{{"query": "..."}}`
-- `GET /stats` — counts, plus `corpus_built_at` and `data_age_hours` (freshness is
+- `GET /stats` â€” counts, plus `corpus_built_at` and `data_age_hours` (freshness is
   deliberately public)
-- `GET /docs` — OpenAPI
+- `GET /docs` â€” OpenAPI
 
 ## Coverage
 
-- **CPSC** (consumer products) — the full structured U.S. recall feed
-- **openFDA** (food, drug, device) — enforcement reports
-- **Cited requirements** — CPSIA/CPC, CPSC eFiling, EU GPSR, CE marking, REACH
+- **CPSC** (consumer products) â€” the full structured U.S. recall feed
+- **openFDA** (food, drug, device) â€” enforcement reports
+- **Cited requirements** â€” CPSIA/CPC, CPSC eFiling, EU GPSR, CE marking, REACH
   SVHCs, RoHS, California Prop 65
 
 Every record carries a resolvable `source_url`: either the official CPSC page or
@@ -100,8 +100,8 @@ The corpus is rebuilt daily from the upstream feeds. Check `data_age_hours` at
 def server_card() -> dict:
     """The MCP server card served at /.well-known/mcp/server.json."""
     return {
-        "name": "verity",
-        "title": "Verity",
+        "name": "rattlewatch",
+        "title": "Rattlewatch",
         "description": SHORT_DESCRIPTION,
         "version": __version__,
         "homepage": REPO_URL,
@@ -133,7 +133,7 @@ def server_card() -> dict:
 # which in turn unblocks the awesome-list PRs that require a Glama badge.
 GLAMA_JSON = {
     "$schema": "https://glama.ai/mcp/schemas/server.json",
-    "name": "verity",
+    "name": "rattlewatch",
     "description": SHORT_DESCRIPTION,
     "repository": REPO_URL,
     "license": "MIT",
@@ -146,7 +146,7 @@ GLAMA_JSON = {
 
 # Explicitly welcome crawlers. This service exists to be discovered by agents,
 # so a missing robots.txt (previously a 404) was actively unhelpful.
-ROBOTS_TXT = """# Verity is a public, read-only API intended to be found and used by agents.
+ROBOTS_TXT = """# Rattlewatch is a public, read-only API intended to be found and used by agents.
 # Crawlers, registries and indexers are explicitly welcome.
 
 User-agent: *
@@ -175,7 +175,7 @@ def agent_card() -> dict:
     registries that speak A2A read. Only real capabilities are described.
     """
     return {
-        "name": "verity",
+        "name": "rattlewatch",
         "description": SHORT_DESCRIPTION,
         "version": __version__,
         "documentationUrl": f"{API_URL}/llms.txt",

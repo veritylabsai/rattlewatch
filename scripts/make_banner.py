@@ -1,4 +1,4 @@
-"""Generate the Verity wordmark lockup (mark + name), for banners/social use.
+"""Generate the Rattlewatch wordmark lockup (mark + name), for banners/social use.
 
 Separate from the avatar: the avatar must work at ~32px, so it carries no text.
 This lockup is the wide version used in README headers, social previews, and
@@ -92,9 +92,9 @@ def main() -> int:
     name_font = load(FONT_BOLD, 128)
     tag_font = load(FONT_REG, 32)
 
-    name, tag = "Verity", "Cited ground truth for AI agents"
+    name, tag = "Rattlewatch", "Cited ground truth for AI agents"
 
-    # Measure rather than guess: the descender in "Verity" previously collided
+    # Measure rather than guess: the descender in "Rattlewatch" previously collided
     # with the tagline because positions were hard-coded.
     nb = d.textbbox((0, 0), name, font=name_font)
     tb = d.textbbox((0, 0), tag, font=tag_font)

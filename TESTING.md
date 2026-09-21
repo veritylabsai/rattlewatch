@@ -22,7 +22,7 @@ nothing is invented.**
 
 | Check | Property |
 |---|---|
-| `test_store_is_populated` | Fixture sanity (fails loudly if `verity build` wasn't run) |
+| `test_store_is_populated` | Fixture sanity (fails loudly if `rattlewatch build` wasn't run) |
 | `test_search_finds_a_real_recall` | Real match on real data, with a source URL |
 | `test_search_returns_empty_for_gibberish` | No match for nonsense |
 | `test_search_ignores_stray_short_numbers` | Regression: `"999"` must not act as a decisive identifier |
@@ -67,11 +67,11 @@ speedup:                              ~560x
 Reproduce with the benchmark in the commit history, or:
 
 ```python
-from verity.engine import Engine, _CORPUS_CACHE
-from verity.store import Store
+from rattlewatch.engine import Engine, _CORPUS_CACHE
+from rattlewatch.store import Store
 import time
 _CORPUS_CACHE.clear()
-e = Engine(Store("var/verity.sqlite3"))
+e = Engine(Store("var/rattlewatch.sqlite3"))
 e.search_recalls("grill")                      # warm the cache
 t = time.perf_counter()
 for _ in range(20): e.search_recalls("grill")

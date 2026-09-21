@@ -1,8 +1,8 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
-  "name": "verity",
+  "name": "rattlewatch",
   "description": "Cited product-compliance ground truth for AI agents. Never generates; always cites.",
-  "repository": "https://github.com/veritylabsai/verity",
+  "repository": "https://github.com/veritylabsai/rattlewatch",
   "license": "MIT",
   "tools": 4,
   "transport": ["http"],

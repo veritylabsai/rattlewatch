@@ -1,4 +1,4 @@
-"""Generate the Verity mark.
+"""Generate the Rattlewatch mark.
 
 Design: a deep-field gradient with a verification seal (ring) and a bold
 checkmark. Built for a circular avatar crop — full-bleed background, centred
@@ -80,7 +80,7 @@ def build() -> Image.Image:
     return img.resize((OUT, OUT), Image.LANCZOS)
 
 
-SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Verity">
+SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Rattlewatch">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#0A1322"/>

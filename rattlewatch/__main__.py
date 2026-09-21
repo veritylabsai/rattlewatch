@@ -10,7 +10,7 @@ from . import __version__
 from .compile import OPENFDA_ENDPOINTS, fetch_cpsc, fetch_fda, ingest_cpsc, ingest_fda, load_facts
 from .store import Store
 
-DEFAULT_DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
+DEFAULT_DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlewatch.sqlite3"))
 DEFAULT_RULES = Path(__file__).resolve().parent.parent / "data" / "rules" / "seed.yaml"
 
 
@@ -71,8 +71,8 @@ def cmd_mcp(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="verity", description="Verity ground-truth layer")
-    parser.add_argument("--version", action="version", version=f"verity {__version__}")
+    parser = argparse.ArgumentParser(prog="rattlewatch", description="Rattlewatch ground-truth layer")
+    parser.add_argument("--version", action="version", version=f"rattlewatch {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("build", help="ingest sources into the ground-truth store")

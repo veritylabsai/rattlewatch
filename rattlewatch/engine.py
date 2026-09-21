@@ -244,7 +244,7 @@ class Engine:
             "query": query,
             "results": results,
             "note": (
-                "Answers are limited to cited records in the Verity store. "
+                "Answers are limited to cited records in the Rattlewatch store. "
                 "Absence here means 'no verified record', not a negative claim."
             ),
         }

@@ -1,4 +1,4 @@
-"""Tests for the Verity engine.
+"""Tests for the Rattlewatch engine.
 
 The core property under test: the engine returns ONLY cited records, and it
 explicitly says "no verified record" rather than hallucinating. Every positive
@@ -13,10 +13,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from verity.engine import Engine  # noqa: E402
-from verity.store import Store  # noqa: E402
+from rattlewatch.engine import Engine  # noqa: E402
+from rattlewatch.store import Store  # noqa: E402
 
-DB = Path(os.environ.get("VERITY_DB", Path.cwd() / "var" / "verity.sqlite3"))
+DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlewatch.sqlite3"))
 
 
 def _engine() -> Engine:
@@ -25,7 +25,7 @@ def _engine() -> Engine:
 
 def test_store_is_populated():
     stats = _engine().store.stats()
-    assert stats["recalls"] > 0, "run `python -m verity build` first"
+    assert stats["recalls"] > 0, "run `python -m rattlewatch build` first"
     assert stats["facts"] > 0
 
 
@@ -100,7 +100,7 @@ def test_fda_records_map_and_are_searchable():
     """
     import tempfile
 
-    from verity.compile import _fda_date, _flatten_fda, ingest_fda
+    from rattlewatch.compile import _fda_date, _flatten_fda, ingest_fda
 
     assert _fda_date("20260813") == "2026-08-13"
     assert _fda_date("") is None
@@ -139,7 +139,7 @@ def test_fda_records_map_and_are_searchable():
 
 
 def test_fda_record_missing_recall_number_is_skipped():
-    from verity.compile import _flatten_fda
+    from rattlewatch.compile import _flatten_fda
 
     assert _flatten_fda({"product_description": "no id"}, "food") is None
 
