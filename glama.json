@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "rattlewatch",
-  "description": "Cited product-compliance ground truth for AI agents. Never generates; always cites.",
+  "description": "US product recall lookup for AI agents: CPSC consumer products and FDA food, drug and device enforcement. Every result is cited; nothing is invented.",
   "repository": "https://github.com/veritylabsai/rattlewatch",
   "license": "MIT",
   "tools": 4,

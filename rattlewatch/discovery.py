@@ -20,18 +20,22 @@ API_URL = "https://rattlewatch.rattled.ca"
 REPO_URL = "https://github.com/veritylabsai/rattlewatch"
 
 SHORT_DESCRIPTION = (
-    "Cited product-compliance ground truth for AI agents. Never generates; always cites."
+    "US product recall lookup for AI agents: CPSC consumer products and FDA food, "
+    "drug and device enforcement. Every result is cited; nothing is invented."
 )
 
 LLMS_TXT = f"""# Rattlewatch
 
-> Cited, current ground truth for cross-border product-safety compliance, for AI agents.
+> US product recall lookup for AI agents. CPSC consumer products plus FDA food,
+> drug and device enforcement, every record pinned to an official source.
 
-Rattlewatch answers the compliance questions that are expensive to get wrong:
+Rattlewatch answers a narrow question well:
 
 - Is this product, brand, or model number subject to a recall?
-- What certification does a product need to enter a given market?
-- What changed in the ground truth this week?
+- Which agency published that recall, and what is the source URL?
+- What recalls or rule changes appeared since a given date?
+- What cited market-entry requirements apply to a product and market? (a small
+  curated set: CPC, CPSC eFiling, EU GPSR, CE marking, REACH SVHC, RoHS, Prop 65)
 
 It **never generates an answer**. It returns only records that exist in its
 store, each pinned to an official source URL and a last-verified date, or an
@@ -215,7 +219,7 @@ def agent_card() -> dict:
                 "id": "verify",
                 "name": "verify",
                 "description": "Cited records matching a claim, or an explicit negative. Never generates.",
-                "tags": ["verification", "ground-truth", "citations"],
+                "tags": ["recalls", "citations", "verification"],
             },
         ],
     }

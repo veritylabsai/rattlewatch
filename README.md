@@ -1,9 +1,13 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Rattlewatch — cited ground truth for AI agents" width="760">
+  <img src="assets/banner.png" alt="Rattlewatch — cited US product recall lookup for AI agents" width="760">
 </p>
 
-**Cited, current, versioned ground truth for AI agents** — in the one domain where
-hallucination is most expensive: cross-border product compliance.
+**US product recall lookup for AI agents** — CPSC consumer products and FDA food,
+drug and device enforcement, with every result pinned to an official source.
+
+The point is not that it searches; it is that it **refuses to answer without a
+citation**. Ask it something it has no record of and it says so, rather than
+inventing a plausible answer.
 
 **Live API:** https://rattlewatch.rattled.ca
 **MCP endpoint:** https://rattlewatch.rattled.ca/mcp
@@ -28,8 +32,8 @@ curl "https://rattlewatch.rattled.ca/v1/recalls/search?q=Bistro%20Pro%20Electric
 Rattlewatch answers the questions an agent cannot safely answer itself:
 
 - *Is this product, brand, or model number subject to a recall?*
-- *What certification does a children's product need to enter the US market?*
-- *What did the ground truth change this week?*
+- *Which agency published that recall, and where is the source?*
+- *What recalls or rule changes appeared since a given date?*
 
 Every answer carries an **official source URL** and a **last-verified date**. Rattlewatch
 **never generates an answer** — it returns records that exist in its store, or it
@@ -66,9 +70,10 @@ says *"no verified record"*. Absence is an honest negative, not a guess.
 - **Recalls** — the full structured U.S. CPSC feed (consumer products) plus
   openFDA enforcement reports for **food, drug and device**. Every record carries
   a resolvable source URL: the official CPSC page, or a per-record openFDA query.
-- **Requirements** — a curated set of cited cross-border product-compliance facts:
-  CPSIA/Children's Product Certificate, CPSC eFiling, EU GPSR, CE marking,
+- **Requirements** — a small curated set of cited market-entry facts, seven in
+  total: CPSIA/Children's Product Certificate, CPSC eFiling, EU GPSR, CE marking,
   REACH SVHCs, RoHS, and California Prop 65 — each with a verbatim citation.
+  This is a companion to the recall data, not a regulatory database.
 
 ```bash
 python -m rattlewatch build --max-recalls 5000 --fda-limit 3000   # default in the image

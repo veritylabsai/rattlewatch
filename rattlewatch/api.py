@@ -103,9 +103,9 @@ async def _lifespan(app: FastAPI):
 app = FastAPI(
     title="Rattlewatch",
     description=(
-        "Cited, current, versioned ground truth for cross-border product "
-        "compliance. Every answer carries an official source and a "
-        "last-verified date. Nothing is generated."
+        "US product recall lookup for AI agents: CPSC consumer products and FDA "
+        "food, drug and device enforcement. Every result carries an official "
+        "source URL and a last-verified date. Nothing is generated."
     ),
     version=APP_VERSION,
     docs_url="/docs",
@@ -223,7 +223,7 @@ def _engine() -> Engine:
 def root() -> dict[str, Any]:
     return {
         "name": "Rattlewatch",
-        "tagline": "verified ground truth for AI agents",
+        "tagline": "cited US product recall lookup for AI agents",
         "version": APP_VERSION,
         "docs": "/docs",
         "health": "/health",

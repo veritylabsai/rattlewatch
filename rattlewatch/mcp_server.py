@@ -24,12 +24,14 @@ DEFAULT_DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlew
 
 mcp = MCPServer(
     name="rattlewatch",
-    title="Rattlewatch — verified product-safety ground truth",
+    title="Rattlewatch — cited US product recall lookup",
     description=(
-        "Cited, current, versioned ground truth for cross-border product "
-        "compliance (recalls, certifications, and market requirements). "
-        "Returns only records that exist in the store, each pinned to an "
-        "official source. Never generates an answer."
+        "Search US product recall data for AI agents: CPSC consumer product "
+        "recalls and FDA food, drug and device enforcement reports. Returns only "
+        "records that exist in the store, each pinned to an official source URL, "
+        "or an explicit 'no verified record'. Never generates an answer. Also "
+        "serves a small curated set of cited market-entry requirements (CPC, "
+        "CPSC eFiling, EU GPSR, CE marking, REACH SVHC, RoHS, Prop 65)."
     ),
     version=__version__,
 )
@@ -59,8 +61,9 @@ def _readonly(title: str) -> ToolAnnotations:
 @mcp.tool(
     name="search_recalls",
     description=(
-        "Search official CPSC recall records by product name, brand, model, or "
-        "UPC. Returns only cited recall records from the store, each with a "
+        "Search official US recall records by product name, brand, model, or "
+        "UPC. Covers CPSC consumer products and FDA food, drug and device "
+        "enforcement. Returns only cited records from the store, each with a "
         "source URL and a match score. If nothing matches, returns an empty list "
         "rather than guessing."
     ),
@@ -79,9 +82,11 @@ def search_recalls(query: str, market: str = "US", limit: int = 10) -> dict:
 @mcp.tool(
     name="get_requirement",
     description=(
-        "Get cited compliance requirements for a product subject in a given "
-        "market (e.g. subject='childrens_products', market='US'). Returns facts "
-        "with their official citation URL and last-verified date."
+        "Get cited market-entry requirements for a product subject in a given "
+        "market (e.g. subject='childrens_products', market='US'). This is a "
+        "small curated set, not a full regulatory database: CPC, CPSC eFiling, "
+        "EU GPSR, CE marking, REACH SVHC, RoHS and California Prop 65. Returns "
+        "each fact with its official citation URL and last-verified date."
     ),
     annotations=_readonly("Get requirement"),
 )
@@ -93,9 +98,9 @@ def get_requirement(subject: str, market: str | None = None) -> dict:
 @mcp.tool(
     name="list_changes",
     description=(
-        "List ground-truth changes since an ISO-8601 timestamp (e.g. "
-        "'2026-09-01T00:00:00+00:00'). Includes newly published recalls and "
-        "rule changes, each with its source URL."
+        "List recall and requirement changes since an ISO-8601 timestamp (e.g. "
+        "'2026-09-01T00:00:00+00:00'). Includes newly published recalls and rule "
+        "changes, each with its source URL."
     ),
     annotations=_readonly("List changes"),
 )
@@ -107,8 +112,8 @@ def list_changes(since: str, limit: int = 100) -> dict:
 @mcp.tool(
     name="verify",
     description=(
-        "Check a factual claim or product query against the store. Returns only "
-        "cited records (recalls and facts) that match. Explicitly reports "
+        "Check a claim or product query against the store. Returns only cited "
+        "records (recalls and requirements) that match. Explicitly reports "
         "'no verified record' when nothing matches -- it never synthesizes an "
         "answer, so absence means 'not in the store', not a negative claim."
     ),
