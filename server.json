@@ -3,7 +3,7 @@
   "name": "io.github.veritylabsai/rattlewatch",
   "title": "Rattlewatch",
   "description": "Cited US recall lookup for AI agents: CPSC and FDA data, nothing invented.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "websiteUrl": "https://github.com/veritylabsai/rattlewatch",
   "repository": {
     "url": "https://github.com/veritylabsai/rattlewatch",
