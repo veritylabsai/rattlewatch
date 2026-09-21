@@ -37,7 +37,7 @@ jobs:
       - name: Build ground-truth store from fixture (no network)
         run: python -m rattlewatch build --cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0
 
-      - name: Engine tests â€” correctness and non-hallucination
+      - name: Engine tests — correctness and non-hallucination
         run: python tests/test_engine.py
 
       - name: Security and abuse tests
@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build image (hermetic â€” fixture, not the live feed)
+      - name: Build image (hermetic — fixture, not the live feed)
         run: |
           docker build \
             --build-arg RATTLEWATCH_BUILD_ARGS="--cache tests/fixtures/recalls.json --max-recalls 50 --fda-limit 0" \

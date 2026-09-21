@@ -13,19 +13,19 @@ Two small services, both from this one repo:
 | **REST API** | `python -m rattlewatch serve` | 8000 | The hosted product: `/v1/*`, `/docs`, x402 premium |
 | **MCP server** | `python -m rattlewatch mcp --http` | 8001 | MCP-over-HTTP for agents (optional; REST API is primary) |
 
-The REST API is the primary monetization surface â€” it is HTTP-native, which is
+The REST API is the primary monetization surface — it is HTTP-native, which is
 exactly what the x402 `402 Payment Required` flow expects. MCP is a thin adapter
 over the same engine; locally, agents connect to it over stdio.
 
 ## Accounts you create (one-time, ~30 min)
 
-1. **GitHub** â€” hosts the repo (this is the primary *discovery* surface; agents
+1. **GitHub** — hosts the repo (this is the primary *discovery* surface; agents
    and developers find MCP servers on GitHub).
 2. **One host**, either:
    - **Google Cloud** (use your existing credits), or
    - **Render** (free tier; service sleeps when idle and wakes on request).
 
-## Option A â€” Google Cloud Run (uses your credits)
+## Option A — Google Cloud Run (uses your credits)
 
 ```bash
 # one-time setup
@@ -48,31 +48,31 @@ gcloud run deploy verity-mcp \
 Note: `gcloud run deploy` for the MCP service needs a `--container-port 8001` flag
 when the image's CMD is overridden to a non-default port.
 
-## Option B â€” Render (free tier)
+## Option B — Render (free tier)
 
-1. `render.com` â†’ New â†’ **Web Service** â†’ connect the GitHub repo.
+1. `render.com` → New → **Web Service** → connect the GitHub repo.
 2. Runtime: **Docker**. (The `Dockerfile` is already in the repo.)
 3. Start command: `python -m rattlewatch serve --host 0.0.0.0 --port $PORT`.
 4. Deploy. Note the free tier sleeps after ~15 min idle and cold-starts on the
-   next request â€” acceptable for an API that agents call on demand.
+   next request — acceptable for an API that agents call on demand.
 
 ## Promotion status
 
-> ðŸš§ **The critical path is ONE web action: submit Rattlewatch to Glama.**
-> Both `awesome-mcp-servers` (95kâ˜…) and `awesome-remote-mcp-servers` require a
+> 🚧 **The critical path is ONE web action: submit Rattlewatch to Glama.**
+> Both `awesome-mcp-servers` (95k★) and `awesome-remote-mcp-servers` require a
 > Glama score badge on every entry, so both PRs are blocked behind a Glama
-> listing. Glama has no public submission API â€” it needs the web form at
+> listing. Glama has no public submission API — it needs the web form at
 > <https://glama.ai/mcp/servers> (and for a hosted server, also
 > <https://glama.ai/mcp/connectors>). Nothing else on this page is blocked.
 
 | Channel | Status |
 |---|---|
-| **Official MCP Registry** | âœ… live â€” `io.github.veritylabsai/rattlewatch` v0.1.0 |
-| GitHub topics + tagged release | âœ… done (12 discovery topics) |
-| `awesome-mcp-servers` (95kâ˜…) | â³ PR [#14759](https://github.com/punkpeye/awesome-mcp-servers/pull/14759) open, mergeable â€” **blocked on the Glama badge** |
-| `awesome-remote-mcp-servers` | â³ same Glama requirement |
-| **Glama** | âŒ not listed â€” needs <https://glama.ai/mcp/servers> |
-| **Smithery** | âŒ not listed â€” needs <https://smithery.ai/new> (paste the endpoint URL) |
+| **Official MCP Registry** | ✅ live — `io.github.veritylabsai/rattlewatch` v0.1.0 |
+| GitHub topics + tagged release | ✅ done (12 discovery topics) |
+| `awesome-mcp-servers` (95k★) | ⏳ PR [#14759](https://github.com/punkpeye/awesome-mcp-servers/pull/14759) open, mergeable — **blocked on the Glama badge** |
+| `awesome-remote-mcp-servers` | ⏳ same Glama requirement |
+| **Glama** | ❌ not listed — needs <https://glama.ai/mcp/servers> |
+| **Smithery** | ❌ not listed — needs <https://smithery.ai/new> (paste the endpoint URL) |
 | PulseMCP / mcp.so | auto-sync from the official registry; not present yet |
 
 Once Glama lists the connector, add the badge line to the PR description and the
@@ -89,7 +89,7 @@ freshness health check all run without intervention.
 ## Ongoing operations (now automated)
 
 **Data refresh is scheduled and working.** A Cloud Run Job (`verity-refresh`)
-rebuilds the image â€” which re-ingests the live CPSC feed at build time â€” and
+rebuilds the image — which re-ingests the live CPSC feed at build time — and
 redeploys both services. Cloud Scheduler triggers it **daily at 06:00 UTC**.
 
 ```bash
@@ -100,18 +100,18 @@ gcloud run jobs executions list --job=verity-refresh --region=us-central1 --proj
 gcloud run jobs execute verity-refresh --region=us-central1 --project=verity-labs --wait
 ```
 
-Each run takes roughly 3â€“4 minutes (build â‰ˆ 55s, two deploys).
+Each run takes roughly 3–4 minutes (build ≈ 55s, two deploys).
 
 > **Two gotchas, learned the hard way:**
 > 1. `gcloud builds submit` exits **non-zero** for a service account that is not a
->    project Viewer/Owner, because it cannot stream build logs â€” even when the
+>    project Viewer/Owner, because it cannot stream build logs — even when the
 >    build itself succeeds. `scripts/refresh.sh` tolerates that exit code and
 >    verifies the build independently.
 > 2. `gcloud run deploy` needs `--flag=value` syntax when the value begins with
 >    `-` (as `--args` does), or it parses the value as a flag and prints help.
 
 - **Monitor**: `/health` and `/stats`; alert if `/health` is non-200. There is
-  currently no alert if a refresh run fails â€” see `SECURITY.md` Â§5.6.
+  currently no alert if a refresh run fails — see `SECURITY.md` §5.6.
 - **Scale**: stateless, read-mostly. One instance serves far more than the
   expected traffic.
 
@@ -122,8 +122,8 @@ Each run takes roughly 3â€“4 minutes (build â‰ˆ 55s, two deploys).
 - [x] Both services deployed and verified live
 - [x] Daily refresh scheduled and verified
 - [x] Published to the official MCP Registry
-- [ ] Upload the profile avatar â€” GitHub has **no API for this**; use
-      Settings â†’ Profile â†’ Upload (`assets/logo.png`)
+- [ ] Upload the profile avatar — GitHub has **no API for this**; use
+      Settings → Profile → Upload (`assets/logo.png`)
 - [ ] (Later) Wire payment: Stripe metered billing or x402/USDC wallet
 - [ ] (Later) List in Smithery / mcp.so / Glama / PulseMCP
 

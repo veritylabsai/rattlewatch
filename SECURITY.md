@@ -1,7 +1,7 @@
 # Security Policy
 
 This document states Rattlewatch's security posture, the controls that are
-implemented and tested, and â€” importantly â€” what is **not** protected. Claims
+implemented and tested, and — importantly — what is **not** protected. Claims
 here are backed by tests in `tests/test_api.py`; if a claim has no test, treat it
 as unverified.
 
@@ -36,13 +36,13 @@ data integrity of the published corpus.
 
 | Threat | Realistic? | Mitigation |
 |---|---|---|
-| Resource exhaustion / CPU burn via repeated queries | **Yes â€” this was a real bug** | Corpus caching (560Ã— faster); query length bounds; rate limiting |
+| Resource exhaustion / CPU burn via repeated queries | **Yes — this was a real bug** | Corpus caching (560× faster); query length bounds; rate limiting |
 | Excessive request volume / cost amplification | Yes | Cloud Run `max-instances=3` cap; per-instance rate limit |
 | Injection (SQL, etc.) | Low | All SQL uses parameterised statements; covered by a test |
 | Information disclosure via errors | Yes | Global exception handler returns a generic message; no stack traces |
 | Secret exfiltration via the repo | Moderate | No secrets in the repo; `.gitignore` blocks `.env`, `*.pem`, credentials JSON |
 | Container escape / privilege escalation | Low | Container runs as unprivileged UID 10001, no shell, no added capabilities |
-| Supply-chain compromise of a dependency | Moderate | Minimal dependency set (4 runtime deps) â€” see Â§7 |
+| Supply-chain compromise of a dependency | Moderate | Minimal dependency set (4 runtime deps) — see §7 |
 | Abuse of the premium tier | N/A today | Fails closed: 402/503, never grants access without a valid key |
 
 ## 4. Implemented controls
@@ -50,16 +50,16 @@ data integrity of the published corpus.
 All of the following are enforced and tested.
 
 **Input handling**
-- Query strings bounded at **256 characters** â€” enforced at *both* the FastAPI
+- Query strings bounded at **256 characters** — enforced at *both* the FastAPI
   layer and independently inside the engine (defence in depth).
-- `limit` bounded to 1â€“50; `subject` â‰¤ 64 chars; `since` â‰¤ 40 chars.
+- `limit` bounded to 1–50; `subject` ≤ 64 chars; `since` ≤ 40 chars.
 - Request bodies over 4 KB rejected with `413` before reaching a handler.
 - All SQL is parameterised; a `'; DROP TABLE --` payload is asserted inert.
 
 **Resource protection**
 - The matching corpus (recalls + token sets + IDF) is **cached per process** and
   invalidated by a cheap data fingerprint. This replaced a per-request rebuild of
-  the entire corpus â€” measured at **215 ms â†’ 0.4 ms (560Ã—)** for 3,000 records.
+  the entire corpus — measured at **215 ms → 0.4 ms (560×)** for 3,000 records.
 - Per-client sliding-window rate limit (default 60 req/60 s, env-tunable).
 - Cloud Run `max-instances=3` bounds blast radius and cost.
 
@@ -87,9 +87,9 @@ All of the following are enforced and tested.
 **Cloud**
 - Public access is limited to the two Cloud Run services; no public buckets.
 - The refresher service account holds only the roles its job needs.
-- No service-account keys were created â€” no long-lived credentials exist.
+- No service-account keys were created — no long-lived credentials exist.
 
-## 5. NOT protected â€” known limitations
+## 5. NOT protected — known limitations
 
 Stated plainly so nobody assumes a guarantee that does not exist.
 
@@ -97,10 +97,10 @@ Stated plainly so nobody assumes a guarantee that does not exist.
    public read-only dataset; the goal is availability, not access control. There
    is no per-user identity, so abusive users cannot be individually blocked.
 2. **Rate limiting is per-instance and in-memory.** Cloud Run may run up to 3
-   instances, so the effective global limit is up to 3Ã— the configured value, and
+   instances, so the effective global limit is up to 3× the configured value, and
    counters reset when an instance is recycled. It is a coarse guard against
    accidental runaway loops, **not** a defence against a determined attacker.
-   A global limiter would require a shared store (e.g. Redis/Firestore) â€” not built.
+   A global limiter would require a shared store (e.g. Redis/Firestore) — not built.
 3. **No WAF, bot mitigation, or DDoS protection** beyond Cloud Run's platform
    defaults and the instance cap. A volumetric attack would still cost money.
 4. **API keys are stored as plain environment variables**, not in Secret Manager.
@@ -112,7 +112,7 @@ Stated plainly so nobody assumes a guarantee that does not exist.
    image (re-ingesting the live CPSC feed) and redeploys both services, triggered
    by Cloud Scheduler at **06:00 UTC daily**. The corpus can therefore be up to
    ~24 hours stale. Freshness is **publicly visible** via `/stats`
-   (`corpus_built_at`, `data_age_hours`) â€” deliberately, because a stale
+   (`corpus_built_at`, `data_age_hours`) — deliberately, because a stale
    "current ground truth" service should be detectable by anyone relying on it.
    A scheduled check (`.github/workflows/health.yml`, 09:00 UTC) fails if the
    corpus exceeds 36 hours, so a silent refresh failure surfaces as a failed
@@ -127,7 +127,7 @@ Stated plainly so nobody assumes a guarantee that does not exist.
   tracking.
 - Recall data originates from the public CPSC REST API and is attributed with a
   source URL on every record.
-- Client IPs are used transiently for rate limiting and are **not persisted** â€”
+- Client IPs are used transiently for rate limiting and are **not persisted** —
   counters live in process memory only.
 
 ## 7. Dependencies

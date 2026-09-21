@@ -2,9 +2,9 @@
 
 Two conventions matter for a service whose users are agents:
 
-* ``/llms.txt`` â€” a plain-text summary an LLM can read to understand the service
+* ``/llms.txt`` — a plain-text summary an LLM can read to understand the service
   without scraping HTML.
-* ``/.well-known/mcp/server.json`` (and ``server-card.json``) â€” the MCP server
+* ``/.well-known/mcp/server.json`` (and ``server-card.json``) — the MCP server
   card, so directories and clients can discover the endpoint and its tools.
 
 These are served from the running service, so they cannot drift from what the
@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from . import __version__
 
-MCP_URL = "https://verity-mcp-243195959173.us-central1.run.app/mcp"
-API_URL = "https://verity-api-243195959173.us-central1.run.app"
+MCP_URL = "https://rattlewatch.rattled.ca/mcp"
+API_URL = "https://rattlewatch.rattled.ca"
 REPO_URL = "https://github.com/veritylabsai/rattlewatch"
 
 SHORT_DESCRIPTION = (
@@ -50,11 +50,11 @@ version and a change event rather than an in-place edit.
 
 ## Tools
 
-- `search_recalls` â€” cited CPSC recall records by product name, brand, model, or UPC
-- `get_requirement` â€” cited requirements for a subject + market (CPSIA/CPC, CPSC
+- `search_recalls` — cited CPSC recall records by product name, brand, model, or UPC
+- `get_requirement` — cited requirements for a subject + market (CPSIA/CPC, CPSC
   eFiling, EU GPSR, CE marking, REACH SVHCs, RoHS, California Prop 65)
-- `list_changes` â€” new recalls and rule changes since an ISO-8601 timestamp
-- `verify` â€” cited records matching a claim, or an explicit negative
+- `list_changes` — new recalls and rule changes since an ISO-8601 timestamp
+- `verify` — cited records matching a claim, or an explicit negative
 
 ## REST API
 
@@ -64,15 +64,15 @@ version and a change event rather than an in-place edit.
 - `GET /v1/requirements?subject=<subject>&market=<market>`
 - `GET /v1/changes?since=<iso8601>`
 - `POST /v1/verify` with `{{"query": "..."}}`
-- `GET /stats` â€” counts, plus `corpus_built_at` and `data_age_hours` (freshness is
+- `GET /stats` — counts, plus `corpus_built_at` and `data_age_hours` (freshness is
   deliberately public)
-- `GET /docs` â€” OpenAPI
+- `GET /docs` — OpenAPI
 
 ## Coverage
 
-- **CPSC** (consumer products) â€” the full structured U.S. recall feed
-- **openFDA** (food, drug, device) â€” enforcement reports
-- **Cited requirements** â€” CPSIA/CPC, CPSC eFiling, EU GPSR, CE marking, REACH
+- **CPSC** (consumer products) — the full structured U.S. recall feed
+- **openFDA** (food, drug, device) — enforcement reports
+- **Cited requirements** — CPSIA/CPC, CPSC eFiling, EU GPSR, CE marking, REACH
   SVHCs, RoHS, California Prop 65
 
 Every record carries a resolvable `source_url`: either the official CPSC page or

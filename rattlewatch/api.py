@@ -70,6 +70,10 @@ def _allowed_hosts() -> list[str]:
         "127.0.0.1",
         "127.0.0.1:*",
         "testserver",  # FastAPI TestClient
+        # Public endpoint, served by the nginx edge on the honeypot VM.
+        "rattlewatch.rattled.ca",
+        "rattlewatch.rattled.ca:*",
+        # Kept so the service still answers on its own Cloud Run URLs.
         "verity-api-243195959173.us-central1.run.app",
         "verity-mcp-243195959173.us-central1.run.app",
     ]
@@ -296,7 +300,7 @@ def mcp_server_card() -> dict[str, Any]:
 
 @app.get("/.well-known/mcp/server-card.json", include_in_schema=False)
 def mcp_server_card_alt() -> dict[str, Any]:
-    """Alias â€” different directories probe different filenames."""
+    """Alias — different directories probe different filenames."""
     return discovery.server_card()
 
 
@@ -312,7 +316,7 @@ def glama_claim() -> dict[str, Any]:
 
 @app.get("/robots.txt", include_in_schema=False, response_class=PlainTextResponse)
 def robots() -> PlainTextResponse:
-    """Crawlers are welcome â€” being discovered is the point."""
+    """Crawlers are welcome — being discovered is the point."""
     return PlainTextResponse(discovery.ROBOTS_TXT, media_type="text/plain; charset=utf-8")
 
 
@@ -323,7 +327,7 @@ def sitemap() -> PlainTextResponse:
 
 @app.get("/.well-known/agent-card.json", include_in_schema=False)
 def a2a_agent_card() -> dict[str, Any]:
-    """A2A agent card â€” read by registries that speak Agent-to-Agent."""
+    """A2A agent card — read by registries that speak Agent-to-Agent."""
     return discovery.agent_card()
 
 

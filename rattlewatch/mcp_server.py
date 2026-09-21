@@ -24,7 +24,7 @@ DEFAULT_DB = Path(os.environ.get("RATTLEWATCH_DB", Path.cwd() / "var" / "rattlew
 
 mcp = MCPServer(
     name="rattlewatch",
-    title="Rattlewatch â€” verified product-safety ground truth",
+    title="Rattlewatch — verified product-safety ground truth",
     description=(
         "Cited, current, versioned ground truth for cross-border product "
         "compliance (recalls, certifications, and market requirements). "

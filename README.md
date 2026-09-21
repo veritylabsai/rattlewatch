@@ -1,27 +1,27 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Rattlewatch â€” cited ground truth for AI agents" width="760">
+  <img src="assets/banner.png" alt="Rattlewatch — cited ground truth for AI agents" width="760">
 </p>
 
-**Cited, current, versioned ground truth for AI agents** â€” in the one domain where
+**Cited, current, versioned ground truth for AI agents** — in the one domain where
 hallucination is most expensive: cross-border product compliance.
 
-**Live API:** https://verity-api-243195959173.us-central1.run.app
-**MCP endpoint:** https://verity-api-243195959173.us-central1.run.app/mcp
-**Interactive docs:** https://verity-api-243195959173.us-central1.run.app/docs
+**Live API:** https://rattlewatch.rattled.ca
+**MCP endpoint:** https://rattlewatch.rattled.ca/mcp
+**Interactive docs:** https://rattlewatch.rattled.ca/docs
 
 Machine-readable discovery, for agents rather than browsers:
 
 | Document | URL |
 |---|---|
-| `llms.txt` | [/llms.txt](https://verity-api-243195959173.us-central1.run.app/llms.txt) |
-| MCP server card | [/\.well-known/mcp/server.json](https://verity-api-243195959173.us-central1.run.app/.well-known/mcp/server.json) |
+| `llms.txt` | [/llms.txt](https://rattlewatch.rattled.ca/llms.txt) |
+| MCP server card | [/\.well-known/mcp/server.json](https://rattlewatch.rattled.ca/.well-known/mcp/server.json) |
 
-One container serves **both** surfaces â€” the REST API and MCP over streamable
+One container serves **both** surfaces — the REST API and MCP over streamable
 HTTP at `/mcp`. That matters for registry discovery: directories introspect the
 image's default command, so it has to be a working MCP server.
 
 ```bash
-curl "https://verity-api-243195959173.us-central1.run.app/v1/recalls/search?q=Bistro%20Pro%20Electric%20Grill"
+curl "https://rattlewatch.rattled.ca/v1/recalls/search?q=Bistro%20Pro%20Electric%20Grill"
 ```
 
 
@@ -32,7 +32,7 @@ Rattlewatch answers the questions an agent cannot safely answer itself:
 - *What did the ground truth change this week?*
 
 Every answer carries an **official source URL** and a **last-verified date**. Rattlewatch
-**never generates an answer** â€” it returns records that exist in its store, or it
+**never generates an answer** — it returns records that exist in its store, or it
 says *"no verified record"*. Absence is an honest negative, not a guess.
 
 ---
@@ -41,13 +41,13 @@ says *"no verified record"*. Absence is an honest negative, not a guess.
 
 > An answer without a citation does not ship.
 
-- **Cited** â€” every fact and recall is pinned to an official source (CPSC, EUR-Lex,
+- **Cited** — every fact and recall is pinned to an official source (CPSC, EUR-Lex,
   ECHA, the European Commission, OEHHA).
-- **Versioned** â€” facts are append-only. A changed answer creates a new version and
+- **Versioned** — facts are append-only. A changed answer creates a new version and
   a change event, never an in-place edit.
-- **Current** â€” the store is re-verified against its upstream sources on a schedule;
+- **Current** — the store is re-verified against its upstream sources on a schedule;
   `verified_at` tells you exactly when.
-- **Non-generative** â€” `verify()` returns only matching records. If nothing matches,
+- **Non-generative** — `verify()` returns only matching records. If nothing matches,
   it returns `found: false` with an explicit reason. It will not invent one.
 
 ---
@@ -63,12 +63,12 @@ says *"no verified record"*. Absence is an honest negative, not a guess.
 
 ## Data coverage
 
-- **Recalls** â€” the full structured U.S. CPSC feed (consumer products) plus
+- **Recalls** — the full structured U.S. CPSC feed (consumer products) plus
   openFDA enforcement reports for **food, drug and device**. Every record carries
   a resolvable source URL: the official CPSC page, or a per-record openFDA query.
-- **Requirements** â€” a curated set of cited cross-border product-compliance facts:
+- **Requirements** — a curated set of cited cross-border product-compliance facts:
   CPSIA/Children's Product Certificate, CPSC eFiling, EU GPSR, CE marking,
-  REACH SVHCs, RoHS, and California Prop 65 â€” each with a verbatim citation.
+  REACH SVHCs, RoHS, and California Prop 65 — each with a verbatim citation.
 
 ```bash
 python -m rattlewatch build --max-recalls 5000 --fda-limit 3000   # default in the image
@@ -120,7 +120,7 @@ python -m rattlewatch serve --host 0.0.0.0 --port 8000
 | `GET /v1/requirements?subject=...&market=...` | Free |
 | `GET /v1/changes?since=...` | Free |
 | `POST /v1/verify` | Free |
-| `GET /v1/premium/export` | Metered â€” returns HTTP `402` with an x402 payment requirement |
+| `GET /v1/premium/export` | Metered — returns HTTP `402` with an x402 payment requirement |
 
 Interactive docs: `/docs`.
 
@@ -129,7 +129,7 @@ Interactive docs: `/docs`.
 Free discovery and lookups, metered premium calls. The premium endpoint implements
 the **x402** payment flow: the server returns `402 Payment Required` with a
 structured payment requirement, and a paying agent retries with proof of payment.
-This is the monetization thesis in one endpoint â€” *agents discover, agents pay*.
+This is the monetization thesis in one endpoint — *agents discover, agents pay*.
 The payment rail (x402/USDC or Stripe metered billing) is wired at deploy time.
 
 ---
@@ -153,7 +153,7 @@ rattlewatch/
 ## Why this matters
 
 AI generates infinite plausible text for free, so content is worth nothing. But AI
-hallucinates â€” especially on current rules, specific numbers, and what changed last
+hallucinates — especially on current rules, specific numbers, and what changed last
 week. Rattlewatch is the opposite of a generative model: a small, boring, cited layer of
 truth that agents and the software they power can depend on when being wrong is
 expensive.
@@ -161,7 +161,7 @@ expensive.
 ## Security
 
 See **[SECURITY.md](SECURITY.md)** for the full threat model, the implemented
-controls, and â€” listed explicitly â€” what is **not** protected. Every claim there
+controls, and — listed explicitly — what is **not** protected. Every claim there
 is backed by a test in `tests/test_api.py`.
 
 Highlights: query input bounded at two independent layers; per-client rate
@@ -173,8 +173,8 @@ unprivileged user (UID 10001).
 
 ```bash
 export PYTHONPATH=.
-python tests/test_engine.py   # 13 checks â€” correctness + non-hallucination
-python tests/test_api.py      # 30 checks â€” security + abuse
+python tests/test_engine.py   # 13 checks — correctness + non-hallucination
+python tests/test_api.py      # 30 checks — security + abuse
 ```
 
 See **[TESTING.md](TESTING.md)** for the coverage map and an explicit list of
@@ -182,12 +182,12 @@ what is *not* tested. A green run is not the same as "verified secure."
 
 ## License
 
-**MIT** â€” see [LICENSE](LICENSE).
+**MIT** — see [LICENSE](LICENSE).
 
 The **code** is open source; the **hosted service** is the product. Nothing about
 the moat lives in the source: the defensible asset is the curated,
 daily-refreshed, cited corpus and the freshness pipeline that maintains it.
-Open-sourcing the code also means the citation machinery is auditable â€” which
+Open-sourcing the code also means the citation machinery is auditable — which
 matters for a product whose entire claim is that its answers can be trusted.
 
 You can self-host it:
@@ -197,4 +197,4 @@ docker build -t rattlewatch .
 docker run -p 8000:8000 rattlewatch
 ```
 
-Or use the hosted endpoint: <https://verity-api-243195959173.us-central1.run.app>
+Or use the hosted endpoint: <https://rattlewatch.rattled.ca>
