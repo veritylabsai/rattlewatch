@@ -152,6 +152,11 @@ ROBOTS_TXT = """# Rattlewatch is a public, read-only API intended to be found an
 User-agent: *
 Allow: /
 
+# The operator dashboard is private. It is also protected by HTTP Basic auth at
+# the edge and returns X-Robots-Tag: noindex, so this is belt and braces.
+Disallow: /admin/
+Disallow: /admin
+
 # No crawl-delay: the API is rate limited per client at the edge.
 """
 

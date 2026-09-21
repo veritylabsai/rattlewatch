@@ -1,0 +1,12 @@
+[Unit]
+Description=Periodically rebuild the Rattlewatch admin dashboard
+
+[Timer]
+# Build shortly after boot, then keep the page within ~5 minutes of reality.
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=rattlewatch-dashboard.service
+
+[Install]
+WantedBy=timers.target

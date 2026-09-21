@@ -1,0 +1,41 @@
+[Unit]
+Description=Build the Rattlewatch admin dashboard from the nginx access log
+Documentation=https://rattlewatch.rattled.ca/admin/
+After=nginx.service
+Wants=nginx.service
+
+[Service]
+Type=oneshot
+
+# Runs as notmy, who is in the 'adm' group and can therefore read the
+# 0640 www-data:adm access log. No root privilege is needed or granted.
+User=notmy
+Group=notmy
+ExecStart=/usr/local/bin/rattlewatch-dashboard
+
+# The generator only reads logs and writes one HTML file, so it is confined to
+# exactly that. ProtectSystem=strict makes the whole filesystem read-only apart
+# from the single ReadWritePaths entry below.
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+UMask=0022
+
+ReadWritePaths=/var/www/rattlewatch-admin
+ReadOnlyPaths=/var/log/nginx
