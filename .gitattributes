@@ -1,0 +1,16 @@
+# This repository deploys to Linux containers and a Linux edge host, so shell
+# scripts, nginx configs and Python sources must keep LF endings. Git warned
+# that a Windows checkout would rewrite the nginx configs to CRLF; the same
+# translation would break the shebang in scripts/refresh.sh on the deploy host.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending translated.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
