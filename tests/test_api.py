@@ -279,6 +279,40 @@ def test_robots_txt_welcomes_crawlers():
     assert "Allow: /" in r.text
 
 
+def test_a2a_agent_card_is_served_at_both_paths():
+    """Crawlers probe both the current and legacy A2A paths."""
+    import verity
+
+    for path in ("/.well-known/agent-card.json", "/.well-known/agent.json"):
+        r = _get(path)
+        assert r.status_code == 200, f"{path} must not 404"
+        card = r.json()
+        assert card["name"] == "verity"
+        assert card["version"] == verity.__version__
+        assert len(card["skills"]) == 4, "the card must describe the real tools"
+
+
+def test_sitemap_is_served():
+    r = _get("/sitemap.xml")
+    assert r.status_code == 200
+    assert "<urlset" in r.text
+
+
+def test_all_tools_declare_read_only():
+    """Registries classify tools by side effect; unannotated tools end up
+    unclassified. Every Verity tool only reads, so it must say so."""
+    import asyncio
+
+    from verity.mcp_server import mcp
+
+    tools = asyncio.run(mcp.list_tools())
+    assert len(tools) == 4, [t.name for t in tools]
+    for tool in tools:
+        assert tool.annotations is not None, f"{tool.name} has no annotations"
+        assert tool.annotations.read_only_hint is True, f"{tool.name} not marked read-only"
+        assert tool.annotations.destructive_hint is False, f"{tool.name} not marked non-destructive"
+
+
 def test_version_is_single_sourced():
     """The version drifted silently before; assert it cannot again.
 

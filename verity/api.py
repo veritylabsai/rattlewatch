@@ -316,6 +316,23 @@ def robots() -> PlainTextResponse:
     return PlainTextResponse(discovery.ROBOTS_TXT, media_type="text/plain; charset=utf-8")
 
 
+@app.get("/sitemap.xml", include_in_schema=False, response_class=PlainTextResponse)
+def sitemap() -> PlainTextResponse:
+    return PlainTextResponse(discovery.SITEMAP_XML, media_type="application/xml")
+
+
+@app.get("/.well-known/agent-card.json", include_in_schema=False)
+def a2a_agent_card() -> dict[str, Any]:
+    """A2A agent card — read by registries that speak Agent-to-Agent."""
+    return discovery.agent_card()
+
+
+@app.get("/.well-known/agent.json", include_in_schema=False)
+def a2a_agent_card_legacy() -> dict[str, Any]:
+    """Older A2A path for the same card; crawlers probe both."""
+    return discovery.agent_card()
+
+
 @app.get("/v1/recalls/search")
 def search_recalls(
     request: Request,

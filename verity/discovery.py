@@ -154,3 +154,63 @@ Allow: /
 
 # No crawl-delay: the API is rate limited per client at the edge.
 """
+
+
+SITEMAP_XML = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>{API_URL}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>{API_URL}/docs</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>{API_URL}/llms.txt</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>{API_URL}/.well-known/mcp/server.json</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
+  <url><loc>{REPO_URL}</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+</urlset>
+"""
+
+
+def agent_card() -> dict:
+    """A2A agent card for /.well-known/agent-card.json and /.well-known/agent.json.
+
+    Publishing an A2A card for an MCP server is established practice (MCP
+    server.json and A2A AgentCard describe the same capabilities), and it is what
+    registries that speak A2A read. Only real capabilities are described.
+    """
+    return {
+        "name": "verity",
+        "description": SHORT_DESCRIPTION,
+        "version": __version__,
+        "documentationUrl": f"{API_URL}/llms.txt",
+        "provider": {"organization": "veritylabsai", "url": REPO_URL},
+        "supportedInterfaces": [
+            {"url": MCP_URL, "protocolBinding": "MCP", "protocolVersion": "2025-06-18"},
+            {"url": API_URL, "protocolBinding": "HTTP+JSON", "protocolVersion": "1.0"},
+        ],
+        "capabilities": {"streaming": True, "pushNotifications": False},
+        "defaultInputModes": ["application/json"],
+        "defaultOutputModes": ["application/json"],
+        "skills": [
+            {
+                "id": "search_recalls",
+                "name": "search_recalls",
+                "description": "Search cited CPSC recall records by product name, brand, model, or UPC.",
+                "tags": ["recalls", "product-safety", "compliance"],
+            },
+            {
+                "id": "get_requirement",
+                "name": "get_requirement",
+                "description": "Cited compliance requirements for a product subject and market.",
+                "tags": ["compliance", "regulatory", "requirements"],
+            },
+            {
+                "id": "list_changes",
+                "name": "list_changes",
+                "description": "New recalls and rule changes since a given timestamp.",
+                "tags": ["monitoring", "regulatory", "changes"],
+            },
+            {
+                "id": "verify",
+                "name": "verify",
+                "description": "Cited records matching a claim, or an explicit negative. Never generates.",
+                "tags": ["verification", "ground-truth", "citations"],
+            },
+        ],
+    }

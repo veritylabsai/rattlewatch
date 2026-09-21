@@ -5,7 +5,7 @@
 ```bash
 export PYTHONPATH=.
 python tests/test_engine.py      # correctness + non-hallucination  (13 checks)
-python tests/test_api.py         # security + abuse                (27 checks)
+python tests/test_api.py         # security + abuse                (30 checks)
 ```
 
 Each suite is self-running (no pytest required) and exits non-zero on failure.
@@ -50,8 +50,9 @@ The two most important are `test_verify_never_hallucinates` and
 | Rate limiting | 429 is actually reached under sustained requests |
 | Correctness preserved | Public search still works; verify returns an explicit negative; every result carries a source |
 | Performance / DoS | Corpus is cached; 20 searches complete well under a threshold that a per-request rebuild could not meet |
-| Machine-readable discovery | `/llms.txt`, the MCP server card (both filenames), the Glama ownership claim, and `robots.txt` are served; the repo-root and served Glama claims cannot drift apart |
-| MCP surface | `initialize` succeeds from the same app, and `/mcp` does not 307-redirect (some clients do not replay the body) |
+| Machine-readable discovery | `/llms.txt`, the MCP server card (both filenames), the A2A agent card (both paths), the Glama ownership claim, `robots.txt` and `sitemap.xml` are served; the repo-root and served Glama claims cannot drift apart |
+| MCP surface | `initialize` succeeds from the same app, `/mcp` does not 307-redirect (some clients do not replay the body), and all four tools advertise `readOnlyHint`/`destructiveHint` |
+| Version integrity | The code, served server card, `server.json` and the live MCP handshake all report the same version |
 
 ## 3. Measured performance
 
